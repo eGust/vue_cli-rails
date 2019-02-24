@@ -15,7 +15,7 @@ And then execute:
     $ bundle install
     $ bundle exec rake vue:create
 
-    > Currently `rake vue:create` will overwrite all files, please be careful!
+> Currently `rake vue:create` will overwrite all files, please be careful!
 
 Add those lines to your `config/routes.rb`:
 
