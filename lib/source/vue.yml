@@ -1,0 +1,26 @@
+default: &default
+  package_manager: #PACKAGE_MANAGER
+  manifestOutput: app/assets/vue/manifest.dev.json
+  public_output_path: vue_assets
+  alias:
+    '@': app/assets/vue
+    ~views: app/assets/vue/components/views
+    ~v-launcher: app/assets/vue/components/layouts
+
+development:
+  <<: *default
+  devServer:
+    contentBase: public
+    host: localhost
+    port: 3033
+    compress: true
+  launch_node: vue-cli-service serve
+
+test:
+  <<: *default
+
+production:
+  <<: *default
+  css:
+    extract: true
+  manifestOutput: app/assets/vue/manifest.json
