@@ -15,14 +15,14 @@ And then execute:
     $ bundle install
     $ bundle exec rake vue:create
 
-> Currently `rake vue:create` will overwrite all files, please be careful!
-
 Add those lines to your `config/routes.rb`:
 
 ```ruby
   get 'vue/foo' => 'vue#foo'
   get 'vue/bar' => 'vue#bar'
 ```
+
+> Currently `rake vue:create` will overwrite all files, please be careful!
 
 ## Usage
 
