@@ -9,7 +9,7 @@ namespace :vue do
     FileUtils.chdir root
     # `vue create .` and dependencies
     pm.exec('vue create', "-n -m #{pm.package_manager} .")
-    pm.add '-D webpack-assets-manifest cross-env'
+    pm.add '-D webpack-assets-manifest js-yaml'
     FileUtils.rm_rf root.join('src')
 
     # dirs under `app`

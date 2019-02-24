@@ -12,6 +12,6 @@ export default {
 
 <style>
 #foo {
-  color: red
+  color: red;
 }
 </style>

@@ -36,4 +36,4 @@ You can put `app/assets/vue/manifest.dev.json` into your VCS ignore list.
 
 ## Warning
 
-Currently `vue.config.js` is reading configurations via `bundle exec rake vue:json_config`. You may suffer performance issue if your rake tasks are slow.
+Currently `vue.config.js` is reading configurations from `vue.rails.js` which depends on `js-yaml`. It will fallback to `bundle exec rake vue:json_config` without `js-yaml` installed. You may suffer performance issue if your rake tasks are slow.
