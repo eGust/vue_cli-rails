@@ -8,14 +8,17 @@ namespace :vue do
     # generate config/vue.yml
     FileUtils.chdir root
     # `vue create .` and dependencies
-    pm.exec('vue create', "-n -m #{pm.package_manager} .")
+    pm.exec('vue create', '', "-n -m #{pm.package_manager} .")
     pm.add '-D webpack-assets-manifest js-yaml'
     FileUtils.rm_rf root.join('src')
 
     # dirs under `app`
     src_dir = Pathname.new(__FILE__).dirname.join('..', 'source')
     FileUtils.cp_r(src_dir.join('app'), root)
-    FileUtils.cp(src_dir.join('vue.config.js'), root.join('vue.config.js'))
+    binding.pry
+    Dir[src_dir.join('vue.*.js')].each do |fn|
+      FileUtils.cp(fn, "#{root}/")
+    end
 
     yml = src_dir.join('vue.yml').read
     yml = yml.sub('#PACKAGE_MANAGER', pm.package_manager.to_s)

@@ -33,7 +33,7 @@ module VueCli
         @pm
       end
 
-      def exec(command, args = nil)
+      def exec(command, args = nil, extra = nil)
         cmd = COMMAND_LINE[command.to_sym] || {}
         if @pm == :yarn && cmd[:yarn]
           cmd = cmd[:yarn]
@@ -45,7 +45,8 @@ module VueCli
           cmd = @pm == :yarn ? "yarn exec #{command}" : "npx #{command}"
         end
 
-        cmd = "#{cmd} #{@pm == :yarn ? '-- ' : ''}#{args}" if args.present?
+        cmd = "#{cmd} #{args}" if args.present?
+        cmd = "#{cmd} #{@pm == :yarn ? '-- ' : ''}#{extra}" if extra.present?
         puts "run: #{cmd}"
         system(cmd)
       end
