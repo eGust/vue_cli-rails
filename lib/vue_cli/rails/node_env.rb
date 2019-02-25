@@ -4,29 +4,24 @@ module VueCli
       NODE_BIN_LIST = %i[node yarn npm npx vue].freeze
 
       def initialize
-        h = {}
-        NODE_BIN_LIST.each do |bin|
-          h[bin] = get_version_of(bin)
-        end
-        @versions = h
+        @versions = {}
         yield(self) if block_given?
       end
 
       NODE_BIN_LIST.each do |bin|
         define_method :"#{bin}_version" do
-          @versions[bin]
+          get_version_of(bin)
         end
 
         define_method :"#{bin}?" do
-          @versions[bin].present?
+          get_version_of(bin).present?
         end
       end
 
       def use!(pm)
-        @pm = (pm || (yarn? ? 'yarn' : 'npm')).to_sym
-        unless (@pm == :npm || @pm == :yarn) && self.try(:"#{@pm}?")
-          raise(VueCli::Rails::Error, "Unknown package manager: #{@pm}")
-        end
+        @pm = pm.to_sym
+        raise(ArgumentError, "Unsupported manager: #{@pm}") unless %i[npm yarn].include?(@pm)
+        raise(VueCli::Rails::Error, "Not installed: #{@pm}") unless self.try(:"#{@pm}?")
       end
 
       def package_manager
@@ -65,10 +60,11 @@ module VueCli
       private
 
       def get_version_of(bin)
-        r = `#{bin} --version`.strip.presence
-        return nil if r.nil?
+        return @versions[bin] if @versions.key?(bin)
 
-        r.start_with?('v') ? r[1..-1] : r
+        r = `#{bin} --version`.strip.presence
+        @versions[bin] = r && r.start_with?('v') ? r[1..-1] : r
+        @versions[bin]
       end
 
       def version_ge?(v1, v2)

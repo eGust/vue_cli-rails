@@ -1,6 +1,6 @@
 default: &default
   package_manager: #PACKAGE_MANAGER
-  manifestOutput: app/assets/vue/manifest.dev.json
+  manifestOutput: tmp/manifest.dev.json
   public_output_path: vue_assets
   alias:
     '@': app/assets/vue
