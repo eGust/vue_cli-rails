@@ -5,7 +5,7 @@ module VueCli
         @config ||= VueCli::Rails::Configuration.instance
 
         entry = (@config.manifest_data['entrypoints'] || {})[name]
-        return nil if entry.blank?
+        return raise(VueCli::Rails::Error, "Not found vue entry point: #{name}") if entry.blank?
 
         assets = []
         (entry['css'] || []).each do |css|

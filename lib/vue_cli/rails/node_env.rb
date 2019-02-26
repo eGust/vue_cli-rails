@@ -28,7 +28,7 @@ module VueCli
         @pm
       end
 
-      def exec(command, args = nil, extra = nil)
+      def exec(command, args = nil, extra = nil, env: {})
         cmd = COMMAND_LINE[command.to_sym] || {}
         if @pm == :yarn && cmd[:yarn]
           cmd = cmd[:yarn]
@@ -43,14 +43,18 @@ module VueCli
         cmd = "#{cmd} #{args}" if args.present?
         cmd = "#{cmd} #{@pm == :yarn ? '-- ' : ''}#{extra}" if extra.present?
         puts "run: #{cmd}"
-        system(cmd)
+        system(env, cmd)
       end
 
       COMMAND_LINE = {
         add: {
           yarn: 'yarn add',
           npm: 'npm i -S',
-        }
+        },
+        global_add: {
+          yarn: 'yarn global add',
+          npm: 'npm i -g'
+        },
       }.freeze
 
       def method_missing(cmd, *args)
@@ -62,7 +66,7 @@ module VueCli
       def get_version_of(bin)
         return @versions[bin] if @versions.key?(bin)
 
-        r = `#{bin} --version`.strip.presence
+        r = `#{bin} --version`.strip.presence rescue nil
         @versions[bin] = r && r.start_with?('v') ? r[1..-1] : r
         @versions[bin]
       end
