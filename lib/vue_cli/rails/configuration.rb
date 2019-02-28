@@ -25,7 +25,7 @@ module VueCli
         resolve_config(config, 'manifestOutput')
 
         cfg_alias = config['alias']
-        cfg_alias.keys.each { |k| resolve_config(cfg_alias, k) }
+        cfg_alias.each_key { |k| resolve_config(cfg_alias, k) }
         dev_server = config['devServer'] || {}
         resolve_config(dev_server, 'contentBase')
 

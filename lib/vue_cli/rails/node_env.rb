@@ -18,10 +18,10 @@ module VueCli
         end
       end
 
-      def use!(pm)
-        @pm = pm.to_sym
+      def use!(manager)
+        @pm = manager.to_sym
         raise(ArgumentError, "Unsupported manager: #{@pm}") unless %i[npm yarn].include?(@pm)
-        raise(VueCli::Rails::Error, "Not installed: #{@pm}") unless self.try(:"#{@pm}?")
+        raise(VueCli::Rails::Error, "Not installed: #{@pm}") unless try(:"#{@pm}?")
       end
 
       def package_manager
@@ -30,15 +30,15 @@ module VueCli
 
       def exec(command, args = nil, extra = nil, env: {})
         cmd = COMMAND_LINE[command.to_sym] || {}
-        if @pm == :yarn && cmd[:yarn]
-          cmd = cmd[:yarn]
-        elsif @pm == :npm && cmd[:npm]
-          cmd = cmd[:npm]
-        elsif cmd[:npx]
-          cmd = @pm == :yarn ? "yarn exec #{cmd[:npx]}" : "npx #{cmd[:npx]}"
-        else
-          cmd = @pm == :yarn ? "yarn exec #{command}" : "npx #{command}"
-        end
+        cmd = if @pm == :yarn && cmd[:yarn]
+                cmd[:yarn]
+              elsif @pm == :npm && cmd[:npm]
+                cmd[:npm]
+              elsif cmd[:npx]
+                @pm == :yarn ? "yarn exec #{cmd[:npx]}" : "npx #{cmd[:npx]}"
+              else
+                @pm == :yarn ? "yarn exec #{command}" : "npx #{command}"
+              end
 
         cmd = "#{cmd} #{args}" if args.present?
         cmd = "#{cmd} #{@pm == :yarn ? '-- ' : ''}#{extra}" if extra.present?
@@ -53,7 +53,7 @@ module VueCli
         },
         global_add: {
           yarn: 'yarn global add',
-          npm: 'npm i -g'
+          npm: 'npm i -g',
         },
       }.freeze
 
@@ -66,13 +66,13 @@ module VueCli
       def get_version_of(bin)
         return @versions[bin] if @versions.key?(bin)
 
-        r = `#{bin} --version`.strip.presence rescue nil
+        r = begin
+              `#{bin} --version`.strip.presence
+            rescue StandardError
+              nil
+            end
         @versions[bin] = r && r.start_with?('v') ? r[1..-1] : r
         @versions[bin]
-      end
-
-      def version_ge?(v1, v2)
-        Gem::Version.new(v1) >= Gem::Version.new(v2)
       end
     end
   end

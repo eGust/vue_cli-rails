@@ -12,9 +12,9 @@ module VueCli
 
       def perform_request(env)
         if env['PATH_INFO'].start_with?(@assets_path)
-          env["HTTP_HOST"] = env["HTTP_X_FORWARDED_HOST"] = env["HTTP_X_FORWARDED_SERVER"] = @host
-          env["HTTP_X_FORWARDED_PROTO"] = env["HTTP_X_FORWARDED_SCHEME"] = 'http'
-          env["SCRIPT_NAME"] = ''
+          env['HTTP_HOST'] = env['HTTP_X_FORWARDED_HOST'] = env['HTTP_X_FORWARDED_SERVER'] = @host
+          env['HTTP_X_FORWARDED_PROTO'] = env['HTTP_X_FORWARDED_SCHEME'] = 'http'
+          env['SCRIPT_NAME'] = ''
           super(env)
         else
           @app.call(env)

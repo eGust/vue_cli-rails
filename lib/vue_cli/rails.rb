@@ -1,4 +1,4 @@
-require "vue_cli/rails/version"
+require 'vue_cli/rails/version'
 require 'vue_cli/rails/configuration'
 require 'vue_cli/rails/node_env'
 
