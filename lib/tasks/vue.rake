@@ -4,13 +4,24 @@ namespace :vue do
     pm = VueCli::Rails::NodeEnv.new
     abort('Cannot find node.js') unless pm.node?
 
-    get_input = lambda { |message, list = 'Yn'|
+    default_hint = { 'y' => 'Yes', 'n' => 'No' }
+    get_input = lambda { |message, list = 'Yn', **hint|
       list = list.chars
       default = list.find { |c| c.upcase == c }
       list = list.map { |c| c == default ? c : c.downcase }.uniq
       valid = "[#{list.join('')}]"
+
       list = list.map(&:downcase)
-      print "#{message} #{valid}"
+      hint = default_hint.merge(hint.map { |k, v| [k.to_s.downcase, v] }.to_h)
+      hint = list.map do |c|
+        h = hint[c]
+        next if h.blank?
+
+        "#{c.upcase}=#{h}"
+      end
+
+      print "#{message} (#{hint.join(', ')}) #{valid}"
+      default = default.downcase
       loop do
         r = STDIN.gets.chop.downcase
         break default if r == ''
@@ -20,12 +31,17 @@ namespace :vue do
       end
     }
 
+    pwd = FileUtils.pwd
+    root = ::Rails.root
+    FileUtils.chdir root
+
     # 1. package manager
     yarn = pm.yarn_version
     npm = pm.npm_version
     if yarn
       if npm
-        input = get_input.call('Which package manager to use (Y=Yarn, N=npm)?')
+        keys = root.join('package-lock.json').exist? ? 'yN' : 'Yn'
+        input = get_input.call('Which package manager to use?', keys, y: 'yarn', n: 'npm')
         pm.use!(input == 'n' ? :npm : :yarn)
       else
         pm.use!(:yarn)
@@ -43,18 +59,32 @@ namespace :vue do
       pm.global_add('@vue/cli')
     end
 
-    src_dir = Pathname.new(__FILE__).dirname.join('..', 'source')
-    root = ::Rails.root
-    FileUtils.chdir root
-
     # 2. vue create .
+    src_dir = Pathname.new(__FILE__).dirname.join('..', 'source')
     input = 'y'
     pack = root.join('package.json')
     if pack.exist?
       puts 'Detected `package.json`!'
-      input = get_input.call('  Do you want to rerun `vue create?`', 'yN')
+      input = get_input.call(
+        '  Do you want to rerun `vue create?`',
+        'ynAk',
+        a: 'Auto',
+        k: 'Keep',
+      )
     end
-    pm.exec('vue create', '', "-n -m #{pm.package_manager} .") if input == 'y'
+
+    if input != 'n'
+      src_json = JSON.parse(pack.read) unless input == 'y'
+      pm.exec('vue create', '', "-n -m #{pm.package_manager} .")
+
+      dst_json = JSON.parse(pack.read) unless input == 'y'
+      if input != 'y' && dst_json != src_json
+        src_json, dst_json = [dst_json, src_json] if input == 'a'
+        dst_json.deep_merge!(src_json)
+        pack.write(JSON.pretty_generate(dst_json))
+        pm.install
+      end
+    end
 
     # 3. dev-dependencies
     package = JSON.parse(pack.read)
@@ -76,6 +106,7 @@ namespace :vue do
     input = get_input.call('Do you want to copy demo code?', 'yN')
     FileUtils.cp_r(src_dir.join('app'), root) if input == 'y'
 
+    puts 'Copying configuration files...'
     # 6. config files
     FileUtils.cp(src_dir.join('vue.rails.js'), "#{root}/")
     input = 'y'
@@ -96,6 +127,9 @@ namespace :vue do
       yml = yml.sub('#PACKAGE_MANAGER', pm.package_manager.to_s)
       yml_dest.write(yml)
     end
+
+    puts 'vue:create finished!'
+    FileUtils.chdir pwd
   end
 
   desc 'Add pug template support: formats=pug,sass,less,stylus'

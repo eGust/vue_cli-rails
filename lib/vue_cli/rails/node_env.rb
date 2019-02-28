@@ -55,6 +55,10 @@ module VueCli
           yarn: 'yarn global add',
           npm: 'npm i -g',
         },
+        install: {
+          yarn: '',
+          npm: 'npm i',
+        },
       }.freeze
 
       def method_missing(cmd, *args)
