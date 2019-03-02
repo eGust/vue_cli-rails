@@ -8,6 +8,16 @@ module VueCli
         yield(self) if block_given?
       end
 
+      def use!(manager)
+        @pm = manager.to_sym
+        raise(ArgumentError, "Unsupported manager: #{@pm}") unless %i[npm yarn].include?(@pm)
+        raise(VueCli::Rails::Error, "Not installed: #{@pm}") unless try(:"#{@pm}?")
+      end
+
+      def reset
+        @versions = {}
+      end
+
       NODE_BIN_LIST.each do |bin|
         define_method :"#{bin}_version" do
           get_version_of(bin)
@@ -16,12 +26,6 @@ module VueCli
         define_method :"#{bin}?" do
           get_version_of(bin).present?
         end
-      end
-
-      def use!(manager)
-        @pm = manager.to_sym
-        raise(ArgumentError, "Unsupported manager: #{@pm}") unless %i[npm yarn].include?(@pm)
-        raise(VueCli::Rails::Error, "Not installed: #{@pm}") unless try(:"#{@pm}?")
       end
 
       def package_manager
@@ -47,10 +51,6 @@ module VueCli
       end
 
       COMMAND_LINE = {
-        add: {
-          yarn: 'yarn add',
-          npm: 'npm i -S',
-        },
         global_add: {
           yarn: 'yarn global add',
           npm: 'npm i -g',
@@ -75,7 +75,7 @@ module VueCli
             rescue StandardError
               nil
             end
-        @versions[bin] = r && r.start_with?('v') ? r[1..-1] : r
+        @versions[bin] = r&.start_with?('v') ? r[1..-1] : r
         @versions[bin]
       end
     end

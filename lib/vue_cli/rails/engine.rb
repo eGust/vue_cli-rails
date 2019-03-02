@@ -10,7 +10,7 @@ module VueCli
           app.middleware.insert_before 0, DevServerProxy
           fork do
             config = Configuration.instance
-            config.node_env.exec(config['launch_node'] || 'vue-cli-service serve')
+            config.node_env.exec(config['launch_dev_service'] || 'vue-cli-service serve')
           end
         end
 

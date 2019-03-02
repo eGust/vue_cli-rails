@@ -7,30 +7,63 @@ module VueCli
       end
 
       def node_env
+        raise(Error, 'Incorrect package_manager in config/vue.yml') if @package_manager.blank?
+
         @node_env ||= NodeEnv.new do |ne|
-          ne.use! @config['package_manager']
+          ne.use! @package_manager
         end
       end
 
       def load_config(config)
-        r_env = ::Rails.env
-        config = config[r_env]
-        config['env'] = r_env
-        config['root'] = @root.to_s
-        config['entry'] = entry
+        config = config[::Rails.env]
+        c = {
+          'configureWebpack' => {
+            'entry' => entry,
+            'resolve' => {},
+          },
+        }
+        @package_manager = config['package_manager']
+        cw = c['configureWebpack']
 
-        public_output_path = config['public_output_path'] || 'vue_assets'
-        config['outputDir'] = File.join(resolve('public'), public_output_path)
-        config['publicPath'] = File.join('/', public_output_path, '/')
-        resolve_config(config, 'manifestOutput')
+        c['env'] = ::Rails.env
+        c['root'] = @root.to_s
+        cw['output'] = config['js_output'] if config['js_output'].present?
+        c['manifestOutput'] = config['manifest_output']
+        if ::Rails.env.production? && c['manifestOutput'].blank?
+          raise(Error, 'Incorrect manifest_output in config/vue.yml')
+        end
 
-        cfg_alias = config['alias']
-        cfg_alias.each_key { |k| resolve_config(cfg_alias, k) }
-        dev_server = config['devServer'] || {}
+        public_output_path = c['public_output_path'] || 'vue_assets'
+        c['outputDir'] = File.join(resolve('public'), public_output_path)
+        c['publicPath'] = File.join('/', public_output_path, '/')
+
+        %w[
+          launch_node
+          modern
+
+          filenameHashing
+          lintOnSave
+          runtimeCompiler
+          transpileDependencies
+          productionSourceMap
+          crossorigin
+          css
+          devServer
+          parallel
+          pwa
+          pluginOptions
+        ].each { |k| c[k] = config[k] if config.key?(k) }
+
+        resolve_config(c, 'manifestOutput')
+        config['alias']&.tap do |aliases|
+          aliases.each_key { |k| resolve_config(aliases, k) }
+          cw['resolve']['alias'] = aliases
+        end
+        dev_server = c['devServer'] || {}
         resolve_config(dev_server, 'contentBase')
 
-        self.class.manifest_file = config['manifestOutput']
-        @config = config
+        self.class.manifest_file = c['manifestOutput']
+        @config = c
       end
 
       def [](path)
@@ -47,7 +80,7 @@ module VueCli
       end
 
       def to_json
-        @config.to_json
+        JSON.pretty_generate(@config)
       end
 
       def manifest_data
@@ -60,12 +93,12 @@ module VueCli
         end
 
         def manifest_file=(val)
-          @manifest_file = Pathname.new(val)
+          @manifest_file = val ? Pathname.new(val) : nil
         end
 
         def manifest
           @manifest ||= OpenStruct.new(mtime: nil, data: {})
-          if @manifest_file.exist? && @manifest.mtime != @manifest_file.mtime
+          if @manifest_file&.exist? && @manifest.mtime != @manifest_file.mtime
             @manifest.mtime = @manifest_file.mtime
             @manifest.data = JSON.parse(@manifest_file.read)
           end
@@ -89,7 +122,7 @@ module VueCli
 
       def resolve_config(config, key, default = nil)
         path = config[key] || default
-        config[key] = resolve(path) if path.present?
+        config[key] = resolve(path) if path.present? && path.is_a?(String)
       end
     end
   end
