@@ -58,11 +58,11 @@ Please ONLY puts your entry-point files under `app/assets/vue/views` folder with
 
 > Be aware, `.js.erb` and `.vue.erb` are NOT supported. I will explain the reason in [Q&A section](#difference-from-webpacker).
 
-If you are new to modern front-end development, or more specifically with `webpack` in this case, please read [Q&A section](#Q&A) for more information.
+If you are new to modern front-end development, or more specifically with `webpack` in this case, please read [Q&A section](#qa) for more information.
 
 #### Helper `vue_entry`
 
-`vue_entry` is like `javascript_include_tag` and `stylesheet_link_tag` which generates relative assets links for your entry point. (It's like a combination of `stylesheet_pack_tag` and `javascript_packs_with_chunks_tag` in Webpacker 4. I will explain why it's different in [Q&A](#Q&A).)
+`vue_entry` is like `javascript_include_tag` and `stylesheet_link_tag` which generates relative assets links for your entry point. (It's like a combination of `stylesheet_pack_tag` and `javascript_packs_with_chunks_tag` in Webpacker 4. I will explain why it's different in [Q&A](#qa).)
 
 > You may have interest of path alias in `config/vue.yml`.
 
@@ -204,7 +204,7 @@ Actually `public_output_path` in `config/vue.yml` is very simple - just a sub pa
 
 - `package_manager`
 
-  Pretty straightforward, which package manager will be used. Valid value: `npm` or `yarn`. It does NOT support `pnpm` or other package managers. You can find the reason in [Q&A](#Q&A).
+  Pretty straightforward, which package manager will be used. Valid value: `npm` or `yarn`. It does NOT support `pnpm` or other package managers. You can find the reason in [Q&A](#qa).
 
 - `public_output_path`
 
