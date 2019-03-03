@@ -14,6 +14,10 @@ module VueCli
         end
       end
 
+      JS_CONFIG_CMD = %{
+        node -e "console.log(JSON.stringify(require('./vue.rails.js').getSettings(), null, 2))"
+      }.strip.freeze
+
       def load_config(config)
         config = config[::Rails.env]
         c = {
@@ -29,7 +33,7 @@ module VueCli
         c['root'] = @root.to_s
         cw['output'] = config['js_output'] if config['js_output'].present?
         c['manifestOutput'] = config['manifest_output']
-        if ::Rails.env.production? && c['manifestOutput'].blank?
+        unless c['manifestOutput'].presence
           raise(Error, 'Incorrect manifest_output in config/vue.yml')
         end
 

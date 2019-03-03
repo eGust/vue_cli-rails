@@ -1,6 +1,6 @@
 default: &default
   package_manager: ${PACKAGE_MANAGER}
-  manifest_output: false
+  manifest_output: tmp/manifest.json
   public_output_path: vue_assets
   # js_output:
   #   filename: 'js/[name].[hash:8].js'
@@ -29,5 +29,4 @@ production:
 test:
   <<: *default
   # launch_dev_service: vue-cli-service serve
-  # manifest_output: tmp/manifest.json
   # filenameHashing: false

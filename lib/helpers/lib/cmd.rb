@@ -1,6 +1,6 @@
 module Cmd
   def self.run(cmd)
-    puts cmd
+    STDERR.puts cmd
     system(cmd)
   end
 end

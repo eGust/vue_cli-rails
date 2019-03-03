@@ -51,6 +51,10 @@ module VueCli
       end
 
       COMMAND_LINE = {
+        add: {
+          yarn: 'yarn add',
+          npm: 'npm i',
+        },
         global_add: {
           yarn: 'yarn global add',
           npm: 'npm i -g',
