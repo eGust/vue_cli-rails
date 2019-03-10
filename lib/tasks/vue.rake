@@ -15,7 +15,7 @@ namespace :vue do
   task :json_config, [:from] => :environment do |_t, args|
     if args.from == 'js'
       require_relative '../helpers/lib/cmd'
-      Cmd.run VueCli::Rails::Configuration::JS_CONFIG_CMD
+      Cmd.run(VueCli::Rails::Configuration::JS_CONFIG_CMD)
     else
       config = VueCli::Rails::Configuration.new
       puts config.to_json

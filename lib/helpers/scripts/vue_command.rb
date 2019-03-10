@@ -23,7 +23,7 @@ class VueCommand
     end
 
     STDERR.puts "Unsupported formats #{unknown}" if unknown.any?
-    @pm.add "-D #{pkgs.join(' ')}"
+    @pm.add("-D #{pkgs.join(' ')}")
   end
 
   def install_node_dev
@@ -32,10 +32,10 @@ class VueCommand
 
     add_deps(pack_json, %w[cross-env npm-run-all])
     add_scripts(pack_json,
-                dev: 'run-p rails-s serve',
-                prod: 'cross-env RAILS_ENV=production vue-cli-service build',
-                serve: 'vue-cli-service serve',
-                'rails-s' => 'cross-env NO_WEBPACK_DEV_SERVER=1 rails s')
+      dev: 'run-p rails-s serve',
+      prod: 'cross-env RAILS_ENV=production vue-cli-service build',
+      serve: 'vue-cli-service serve',
+      'rails-s' => 'cross-env NO_WEBPACK_DEV_SERVER=1 rails s')
     puts 'Dependencies and scripts have been installed successfully'
     cmd = @pm.package_manager == :npm ? 'npm run' : 'yarn'
     puts "  Please use `#{cmd} dev` to start dev server"
@@ -49,14 +49,14 @@ class VueCommand
     pkgs = [packages].flatten.find_all do |dep|
       !(dep.blank? || deps.key?(dep))
     end
-    @pm.add "#{dev ? '-D ' : ''}#{pkgs.join(' ')}" if pkgs.any?
+    @pm.add("#{dev ? '-D ' : ''}#{pkgs.join(' ')}") if pkgs.any?
   end
 
   def add_scripts(package_json, commands = {})
     json = JSON.parse(package_json.read)
     scripts = json['scripts']
     commands.stringify_keys.each do |key, cmd|
-      scripts[key] = cmd unless scripts.key? key
+      scripts[key] = cmd unless scripts.key?(key)
     end
     package_json.write(JSON.pretty_generate(json))
   end

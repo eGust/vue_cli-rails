@@ -1,20 +1,8 @@
+inherit_from:
+  - http://shopify.github.io/ruby-style-guide/rubocop.yml
+
 AllCops:
   TargetRubyVersion: 2.3
 
-Metrics/LineLength:
-  Max: 99
-
 Style/FrozenStringLiteralComment:
-  Enabled: false
-
-Style/TrailingCommaInArguments:
-  EnforcedStyleForMultiline: comma
-
-Style/TrailingCommaInArrayLiteral:
-  EnforcedStyleForMultiline: comma
-
-Style/TrailingCommaInHashLiteral:
-  EnforcedStyleForMultiline: comma
-
-Style/Documentation:
   Enabled: false

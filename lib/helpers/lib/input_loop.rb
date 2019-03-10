@@ -5,7 +5,7 @@ class InputLoop
     default, list = build_list(list)
     keys_hint, hint = build_hint(list, hint)
 
-    print "#{message} (#{hint}) #{keys_hint}"
+    print("#{message} (#{hint}) #{keys_hint}")
     wait_valid_input(keys_hint, Set.new(list.map(&:downcase)), default)
   end
 

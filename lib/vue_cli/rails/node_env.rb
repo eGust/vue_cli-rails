@@ -35,14 +35,14 @@ module VueCli
       def exec(command, args = nil, extra = nil, env: {})
         cmd = COMMAND_LINE[command.to_sym] || {}
         cmd = if @pm == :yarn && cmd[:yarn]
-                cmd[:yarn]
-              elsif @pm == :npm && cmd[:npm]
-                cmd[:npm]
-              elsif cmd[:npx]
-                @pm == :yarn ? "yarn exec #{cmd[:npx]}" : "npx #{cmd[:npx]}"
-              else
-                @pm == :yarn ? "yarn exec #{command}" : "npx #{command}"
-              end
+          cmd[:yarn]
+        elsif @pm == :npm && cmd[:npm]
+          cmd[:npm]
+        elsif cmd[:npx]
+          @pm == :yarn ? "yarn exec #{cmd[:npx]}" : "npx #{cmd[:npx]}"
+        else
+          @pm == :yarn ? "yarn exec #{command}" : "npx #{command}"
+        end
 
         cmd = "#{cmd} #{args}" if args.present?
         cmd = "#{cmd} #{@pm == :yarn ? '-- ' : ''}#{extra}" if extra.present?
@@ -75,7 +75,7 @@ module VueCli
         return @versions[bin] if @versions.key?(bin)
 
         r = begin
-              `#{bin} --version`.strip.presence
+              %x`#{bin} --version`.strip.presence
             rescue StandardError
               nil
             end

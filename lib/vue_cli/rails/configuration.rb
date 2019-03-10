@@ -10,7 +10,7 @@ module VueCli
         raise(Error, 'Incorrect package_manager in config/vue.yml') if @package_manager.blank?
 
         @node_env ||= NodeEnv.new do |ne|
-          ne.use! @package_manager
+          ne.use!(@package_manager)
         end
       end
 
@@ -58,9 +58,16 @@ module VueCli
           pluginOptions
         ].each { |k| c[k] = config[k] if config.key?(k) }
 
+        jest = {}
+        c['jestModuleNameMapper'] = jest
         resolve_config(c, 'manifestOutput')
         config['alias']&.tap do |aliases|
-          aliases.each_key { |k| resolve_config(aliases, k) }
+          aliases.each_key do |k|
+            key = k.gsub(%r<(?=[-{}()+.,^$#/\s\]])>, '\\')
+            path = aliases[k].sub(%r/^\//, '').sub(%r/\/$/, '')
+            jest["^#{key}/(.*)$"] = "<rootDir>/#{path}/$1"
+            resolve_config(aliases, k)
+          end
           cw['resolve']['alias'] = aliases
         end
         dev_server = c['devServer'] || {}
