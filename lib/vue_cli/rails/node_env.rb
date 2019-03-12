@@ -11,7 +11,7 @@ module VueCli
       def use!(manager)
         @pm = manager.to_sym
         raise(ArgumentError, "Unsupported manager: #{@pm}") unless %i[npm yarn].include?(@pm)
-        raise(VueCli::Rails::Error, "Not installed: #{@pm}") unless try(:"#{@pm}?")
+        raise(ArgumentError, "Not installed: #{@pm}") unless try(:"#{@pm}?")
       end
 
       def reset

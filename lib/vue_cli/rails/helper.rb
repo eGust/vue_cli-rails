@@ -1,21 +1,18 @@
 module VueCli
   module Rails
     module Helper
-      def vue_entry(name)
-        @config ||= VueCli::Rails::Configuration.instance
+      def vue_entry(entry)
+        assets = VueCli::Rails::Configuration.instance.entry_assets(entry)
+        raise(ArgumentError, "Vue entry (#{entry}) not found!") if assets.blank?
 
-        entry = (@config.manifest_data['entrypoints'] || {})[name]
-        return raise(VueCli::Rails::Error, "Not found vue entry point: #{name}") if entry.blank?
-
-        assets = []
-        (entry['css'] || []).each do |css|
-          assets << stylesheet_link_tag(css)
+        tags = ''.dup
+        (assets['css'] || []).each do |css|
+          tags << %{<link href="#{css}" rel="stylesheet">}
         end
-        (entry['js'] || []).each do |js|
-          assets << javascript_include_tag(js)
+        (assets['js'] || []).each do |js|
+          tags << %{<script src="#{js}"></script>}
         end
-
-        assets.join('').html_safe
+        tags.html_safe
       end
     end
   end

@@ -28,9 +28,12 @@ And then execute:
 - Feel free to use `yarn` or `npm`.
 - Single `vue_entry` rather than confusing `stylesheet_pack_tag`, `javascript_packs_tag` and `javascript_packs_with_chunks_tag`.
 - Get all benefits of [@vue/cli](https://cli.vuejs.org/).
-  - Powered by `webpack` 4
-  - DRY: all-in-one configuration file rather than repeating for `webpack`, `eslint` and etc.
-  - Out-of-box tooling: Babel, TypeScript, PWA, `vue-router`, `vuex`, CSS pre-processors, linter and testing tools.
+
+    - Powered by `webpack` 4
+    - DRY: all-in-one configuration file rather than repeating for `webpack`, `eslint` and etc.
+    - Out-of-box tooling: Babel, TypeScript, PWA, `vue-router`, `vuex`, CSS pre-processors, linter and testing tools.
+    - Enhanced alias support in `jest.config.js`.
+
 - Run `webpack-dev-server` together with Rails server with development mode.
 - Just single `RAILS_ENV`, no more `NODE_ENV`.
 - Rails way configurations in `config/vue.yml`.
@@ -40,9 +43,13 @@ And then execute:
 Out-of-box workflow:
 
 1. `bundle exec rake vue:create` and follow the steps.
-2. Put your entry point files under `app/assets/vue/views`.
-3. `webpack-dev-server` auto starts alongside `rails server` in dev mode.
-4. Invoke `bundle exec rake vue:compile` to compile assets (you still have to set `RAILS_ENV=production` manually).
+
+    > Don NOT select `In package.json` for "Where do you prefer placing config for Babel, PostCSS, ESLint, etc.?". Some functionalities like alias of jest may not work.
+
+2. Put your JavaScript files under `app/assets/vue/entry_points`.
+3. Insert your entry point by `vue_entry 'entry_point'` in views or `render_vue 'entry_point'` in controllers.
+4. `webpack-dev-server` auto starts alongside `rails server` in dev mode.
+5. Invoke `env RAILS_ENV=production bundle exec rake vue:compile` to compile assets (you still must manually set `RAILS_ENV` to `production`).
 
 > More settings are available in `config/vue.yml`
 
@@ -52,9 +59,11 @@ Out-of-box workflow:
 
 #### Concept: Entry Point and File structure
 
-Webpack sees JavaScript files as the center of page rather than HTML. Thus all styles, images, fonts and other assets are related to a JS files. Any `.js` files under `app/assets/vue/views` will be treated as entry-point files.
+The root path of your Vue assets is `app/assets/vue`. This gem will generate several folders. However, `app/assets/vue/entry_points` is the only one matters.
 
-Please ONLY puts your entry-point files under `app/assets/vue/views` folder with `.js` extension name.
+Webpack sees one JavaScript file as the center of a web page rather than HTML. Thus all styles, images, fonts and other assets are related to a JS files by `import 'css/png/svg/woff2/json'`. Any `.js` file under `app/assets/vue/entry_points` will be a entry-point.
+
+Please ONLY puts your entry-point files under `app/assets/vue/entry_points` folder with `.js` extension name.
 
 > Be aware, `.js.erb` and `.vue.erb` are NOT supported. I will explain the reason in [Q&A section](#difference-from-webpacker).
 
@@ -62,7 +71,7 @@ If you are new to modern front-end development, or more specifically with `webpa
 
 #### Helper `vue_entry`
 
-`vue_entry` is like `javascript_include_tag` and `stylesheet_link_tag` which generates relative assets links for your entry point. (It's like a combination of `stylesheet_pack_tag` and `javascript_packs_with_chunks_tag` in Webpacker 4. I will explain why it's different in [Q&A](#qa).)
+`vue_entry` is like `javascript_include_tag` and `stylesheet_link_tag` which generates relative assets links for your entry point. (It's like `javascript_packs_with_chunks_tag` in Webpacker 4. I will explain why it's different in [Q&A](#qa).)
 
 > You may have interest of path alias in `config/vue.yml`.
 
@@ -74,12 +83,11 @@ If you are new to modern front-end development, or more specifically with `webpa
  [+] app
      [+] assets
          [+] vue
-             [+] components
-                 [+] views - alias `~views`
-                     [-] FooBar.vue - Vue component for `foo/bar`
-             [+] views - Folder for entry points
+             [+] entry_points - Folder for entry points
                  [+] foo
                      [-] bar.js - entry point: import '~views/FooBar.vue'
+             [+] views - alias `~views`
+                 [-] FooBar.vue - Vue component for `foo/bar`
      [+] controllers
          [+] foo_controller.rb - controller
      [+] views
@@ -94,7 +102,7 @@ If you are new to modern front-end development, or more specifically with `webpa
  ```yaml
  # default
    alias:
-     ~views: app/assets/vue/components/views
+     ~views: app/assets/vue/views
  ```
 
 - Your controller:
@@ -117,7 +125,7 @@ If you are new to modern front-end development, or more specifically with `webpa
 - Entry point JS:
 
  ```js
- // file - app/assets/vue/views/foo/bar.js
+ // file - app/assets/vue/entry_points/foo/bar.js
  import Vue from 'vue';
 
  import Foo from '~views/FooBar.vue';
@@ -130,7 +138,7 @@ If you are new to modern front-end development, or more specifically with `webpa
 - Your Vue component for your entry point:
 
  ```vue
- // file - app/assets/vue/components/views/FooBar.vue
+ // file - app/assets/vue/views/FooBar.vue
  <template>
    <div id="foo-bar">
      <h1>Foo/bar</h1>
@@ -168,6 +176,55 @@ If you are new to modern front-end development, or more specifically with `webpa
 
 </details>
 
+#### Use `render_vue` in controllers
+
+Usually you only need `<div id="app"></div>` and `vue_entry 'entry/point'` to render a Vue page. You can use `render_vue 'entry/point'` inside your controller.
+
+This method is simply a wrap of `render html: vue_entry('entry_point'), layout: true`. So you can pass any arguments supported by `render` including `layout`.
+
+<details><summary>For example</summary>
+
+```ruby
+# app/controllers/my_vue_controller
+class MyVueController < ApplicationController
+  layout 'vue_base'
+
+  def foo
+    render_vue 'foo/bar'
+  end
+end
+```
+
+```html
+<!-- app/views/layouts/vue_base.erb -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Vue</title>
+</head>
+<body>
+  <div id="app"></div>
+  <%= yield %>
+</body>
+</html>
+```
+
+```js
+// app/assets/vue/entry_points/foo/bar.js
+
+import Vue from 'vue';
+
+import Bar from '../views/Bar.vue';
+
+Vue.config.productionTip = false;
+
+new Vue({
+  render: h => h(Bar),
+}).$mount('#app');
+```
+
+</details>
+
 #### Public Output Path
 
 If the default setting `vue_assets` does not bother you at all, you can ignore this section.
@@ -192,13 +249,19 @@ Actually `public_output_path` in `config/vue.yml` is very simple - just a sub pa
 
 </details>
 
+#### Summary
+
+If you still feel confusing, please create a new project and select copy demo code.
+
+I will explain what happens in [Explanation by Demo](#explanation-by-demo).
+
 ### Available Settings
 
 #### General settings file is `config/vue.yml`
 
 - `manifest_output`
 
-  Where to put `manifest.json` which required by Rails.
+  Where to put `manifest.json` which required by Rails production mode. You can set it in development mode for inspection.
 
   All entry-points will be compiled into assets files. Rails needs `manifest.json` to know what are the files and will serve all its JS/CSS tags.
 
@@ -218,9 +281,13 @@ Actually `public_output_path` in `config/vue.yml` is very simple - just a sub pa
 
   Please see [available options](#valid-vue-cli-config-options).
 
+- `alias`
+
+    It's basically `resolve/alias` for Webpack. However, you don't have to config this settings in `.eslintrc.js` and `jest.config.js` again and again. `@vue/cli` will pass the settings to eslint via its plugin. The configuration for jest will be generated and passed to `jest.config.js` through `vue.rails.js`.
+
 #### Customize your webpack configurations in `vue.config.js`
 
-Feel free update `vue.config.js` by yourself. There are some lines of boiler-plate code to adapt `compression-webpack-plugin` and `webpack-bundle-analyzer`.
+Feel free to update `vue.config.js` by yourself. There are some lines of boiler-plate code to adapt `compression-webpack-plugin` and `webpack-bundle-analyzer`.
 
 ### Rake Tasks
 
@@ -313,7 +380,7 @@ Feel free update `vue.config.js` by yourself. There are some lines of boiler-pla
   }
   ```
 
-> You may need to invoke with `bundle exec`. Rails 5 and above supports new `rails rake:task` flavor.
+> You may need to invoke `rake` with `bundle exec`. Rails 5 and above supports new `rails rake:task` flavor.
 
 ## Valid Vue CLI config Options
 
@@ -505,3 +572,173 @@ Sorry, I don't think many gems work on Windows. Please install a virtual machine
 Currently `vue.config.js` is reading configurations from `vue.rails.js` which depends on `js-yaml`. It will fallback to `bundle exec rake vue:json_config` without `js-yaml` installed. You may suffer performance issue if your rake tasks are slow.
 
 </details>
+
+## Explanation by Demo
+
+<!-- <details><summary>Explanation by Demo</summary> -->
+
+### Install
+
+Run `bundle exec rake vue:create` or `rails vue:create` in Rails 5+, and follow the steps:
+
+```
+$ bundle exec rake vue:create
+Which package manager to use? (Y=yarn, N=npm) [Yn]
+...
+? Generate project in current directory? Yes
+...
+? Check the features needed for your project: Babel, Linter, Unit
+? Pick a linter / formatter config: Airbnb
+? Pick additional lint features: (Press <space> to select, <a> to toggle all, <i> to invert selection)Lint on save
+? Pick a unit testing solution: Jest
+? Where do you prefer placing config for Babel, PostCSS, ESLint, etc.? In dedicated config files
+...
+Do you want to copy demo code? (Y=Yes, N=No) [yN]y
+...
+```
+
+### First Taste
+
+Now with `rails s`, open `http://localhost:3000/vue_demo/foo` in a browser you should be able to see a red big red "Foo" with blue "Hello Vue!".
+
+Do not stop your rails server, open `app/assets/vue/views/Foo.vue` in your editor:
+
+```diff
+<template>
+  <div id="app">
+    <h1>Foo</h1>
+-    <HelloWorld msg="Vue!"></HelloWorld>
++    <HelloWorld msg="Rails!"></HelloWorld>
+  </div>
+</template>
+```
+
+Change `msg="Vue!"` to `msg="Rails!"` and save. You will the text in your browser changed to "Hello Rails!". You can change styles or edit `app/assets/vue/components/HelloWorld.vue` and immediately see the result as well.
+
+This functionality is called [HMR (Hot Module Replacement)](https://webpack.js.org/concepts/hot-module-replacement/) which is the killing feature provided by webpack-dev-server. You will soon fail in love with this feature and never want to go back to manually refresh your browser again and again.
+
+### What in the box
+
+```
+.
+├── app
+│   ├── assets
+│   │   └── vue
+│   │       ├── components
+│   │       │   ├── HelloWorld.vue
+│   │       │   └── layouts
+│   │       │       ├── App.vue
+│   │       │       └── index.js
+│   │       ├── entry_points
+│   │       │   ├── bar.js
+│   │       │   └── foo.js
+│   │       └── views
+│   │           ├── Bar.vue
+│   │           └── Foo.vue
+│   ├── controllers
+│   │   └── vue_demo_controller.rb
+│   └── views
+│       ├── layouts
+│       │   └── vue_demo.html.erb
+│       └── vue_demo
+│           └── foo.html.erb
+├── config
+│   ├── routes.rb
+│   └── vue.yml
+├── tests
+│   └── unit
+│       └── example.spec.js
+├── .browserslistrc
+├── .editorconfig
+├── .eslintrc.js
+├── .gitignore
+├── babel.config.js
+├── jest.config.js
+├── package.json
+├── postcss.config.js
+├── vue.config.js
+├── vue.rails.js
+└── yarn.lock
+```
+
+You can run ESLint by
+
+    $ yarn lint
+
+Run Jest
+
+    $ yarn test:unit
+
+### Compile Assets
+
+First let's compile the assets
+
+```
+$ env RAILS_ENV=production bundle exec rake vue:compile
+run: yarn exec vue-cli-service build
+...
+  File                                      Size             Gzipped
+
+  public/vue_assets/js/chunk-vendors.b54    82.49 KiB        29.80 KiB
+  85759.js
+  public/vue_assets/js/foo.dcbad15e.js      2.74 KiB         1.23 KiB
+  public/vue_assets/js/bar.d4fc59af.js      2.03 KiB         1.00 KiB
+  public/vue_assets/css/foo.4bbe6793.css    0.12 KiB         0.11 KiB
+  public/vue_assets/css/bar.96de90a8.css    0.02 KiB         0.04 KiB
+
+  Images and other types of assets omitted.
+...
+```
+
+Your file names could be different from mine. Don't worry, we won't look those files. There are the files you got:
+
+```
+.
+├── app
+│   ├── assets
+│   │   └── vue
+│   │       └── manifest.json
+└── public
+    └── vue_assets
+        ├── css
+        │   ├── bar.96de90a8.css
+        │   └── foo.4bbe6793.css
+        └── js
+            ├── bar.d4fc59af.js
+            ├── chunk-vendors.b5485759.js
+            └── foo.dcbad15e.js
+```
+
+Let have a look at `app/assets/vue/manifest.json`:
+
+```json
+{
+  "bar.css": "/vue_assets/css/bar.96de90a8.css",
+  "bar.js": "/vue_assets/js/bar.d4fc59af.js",
+  "chunk-vendors.js": "/vue_assets/js/chunk-vendors.b5485759.js",
+  "entrypoints": {
+    "bar": {
+      "js": [
+        "/vue_assets/js/chunk-vendors.b5485759.js",
+        "/vue_assets/js/bar.d4fc59af.js"
+      ],
+      "css": [
+        "/vue_assets/css/bar.96de90a8.css"
+      ]
+    },
+    "foo": {
+      "js": [
+        "/vue_assets/js/chunk-vendors.b5485759.js",
+        "/vue_assets/js/foo.dcbad15e.js"
+      ],
+      "css": [
+        "/vue_assets/css/foo.4bbe6793.css"
+      ]
+    }
+  },
+  "foo.css": "/vue_assets/css/foo.4bbe6793.css",
+  "foo.js": "/vue_assets/js/foo.dcbad15e.js"
+}
+```
+
+<!-- </details> -->

@@ -1,17 +1,16 @@
 default: &default
   package_manager: ${PACKAGE_MANAGER}
-  manifest_output: tmp/manifest.json
   public_output_path: vue_assets
   # js_output:
   #   filename: 'js/[name].[hash:8].js'
   #   chunkFilename: 'js/[name].[hash:8].js'
   alias:
     '@': app/assets/vue
-    ~views: app/assets/vue/components/views
-    ~v-launcher: app/assets/vue/components/layouts
+    # '~': app/assets/vue/components
 
 development:
   <<: *default
+  # manifest_output: tmp/manifest.json
   devServer:
     contentBase: public
     host: localhost

@@ -27,6 +27,7 @@ class VueCreate
       copy_demo?
       copy_config
       generate_vue_yml
+      ensure_entry_point!
       fix_jest_config!
       puts 'vue:create finished!'
     ensure
@@ -101,6 +102,9 @@ class VueCreate
     end
     pub_dir = @root.join('public')
     FileUtils.mv(pub_dir, "#{pub_dir}.backup")
+    reademe = @root.join('README.md')
+    reademe = reademe.exist? && reademe
+    FileUtils.mv(reademe, "#{reademe}.backup") if reademe
 
     begin
       @pm.exec('vue create', '', "-n -m #{@pm.package_manager} .")
@@ -109,6 +113,10 @@ class VueCreate
       FileUtils.rm_rf(pub_dir) if pub_dir.exist?
       FileUtils.mv("#{pub_dir}.backup", pub_dir)
       FileUtils.mv("#{vue_config}.backup", vue_config) if backup_vue_config
+      if reademe
+        FileUtils.rm_f(reademe)
+        FileUtils.mv("#{reademe}.backup", reademe)
+      end
     end
 
     # merge gitignore
@@ -169,16 +177,17 @@ class VueCreate
     foo = false
     bar = false
     route_lines.each do |line|
-      foo ||= line.include?('vue#foo')
-      bar ||= line.include?('vue#bar')
+      foo ||= line.include?('vue_demo#foo')
+      bar ||= line.include?('vue_demo#bar')
     end
     return if foo && bar
 
     end_line = route_lines.rindex { |ln| ln =~ /^\s*end\b/ }
     return if end_line.blank?
 
-    route_lines.insert(end_line, "  get 'vue/bar' => 'vue#bar'") unless bar
-    route_lines.insert(end_line, "  get 'vue/foo' => 'vue#foo'") unless foo
+    route_lines.insert(end_line, "  get 'vue_demo/baz' => 'vue_demo#baz'") unless foo
+    route_lines.insert(end_line, "  get 'vue_demo/bar' => 'vue_demo#bar'") unless bar
+    route_lines.insert(end_line, "  get 'vue_demo/foo' => 'vue_demo#foo'") unless foo
     route_lines.insert(end_line, '  # Example of vue_cli-rails')
     routes.write(route_lines.join("\n"))
   end
@@ -205,12 +214,27 @@ class VueCreate
     yml_dest.write(yml)
   end
 
+  def ensure_entry_point!
+    %w[entry_points assets components utils views].each do |dir_name|
+      dir = @root.join("app/assets/vue/#{dir_name}")
+      FileUtils.mkdir_p(dir) unless dir.exist?
+    end
+
+    ep_dir = @root.join('app/assets/vue/entry_points')
+    return if Dir[ep_dir.join('**/*.js')].any?
+    ep_dir.join('entry_point_demo.js').write("console.log('This is a demo entry point')")
+  end
+
   def fix_jest_config!
     jest_file = @root.join('jest.config.js')
     return unless jest_file.exist?
 
     jest_config = %x`node -e "console.log(JSON.stringify(require('./jest.config.js')))"`
     jest_config = JSON.parse(jest_config)
+    if jest_config['transformIgnorePatterns'] &&
+       !jest_config['transformIgnorePatterns'].include?('<rootDir>/node_modules/')
+      jest_config['transformIgnorePatterns'] << '<rootDir>/node_modules/'
+    end
     jest_config.delete('moduleNameMapper')
     jest = <<~JS
       const { jestModuleNameMapper: moduleNameMapper } = require('./vue.rails');
