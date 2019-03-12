@@ -575,7 +575,7 @@ Currently `vue.config.js` is reading configurations from `vue.rails.js` which de
 
 ## Explanation by Demo
 
-<!-- <details><summary>Explanation by Demo</summary> -->
+<details><summary>Not finished yet</summary>
 
 ### Install
 
@@ -741,4 +741,4 @@ Let have a look at `app/assets/vue/manifest.json`:
 }
 ```
 
-<!-- </details> -->
+</details>
