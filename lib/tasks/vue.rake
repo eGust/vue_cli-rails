@@ -5,7 +5,7 @@ namespace :vue do
     VueCreate.run!
   end
 
-  desc 'Add template/style support: formats=pug,sass,less,stylus'
+  desc 'Add template/style support: formats=pug,slm,sass,less,stylus'
   task :support, [:formats] do |_t, args|
     require_relative '../helpers/scripts/vue_command'
     VueCommand.new.install_format_support(args.formats&.split(/\W/))

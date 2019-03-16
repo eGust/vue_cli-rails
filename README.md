@@ -347,7 +347,7 @@ Feel free to update `vue.config.js` by yourself. There are some lines of boiler-
 
 - `vue:support[formats]`
 
-  Adds template or style language support. Vue ships with supporting `pug`, `sass`, `less` and `stylus` out-of-box. How ever, you still have to install some loaders manually if you did not select that language with `vue:create`.
+  Adds template or style language support. Vue ships with supporting `pug`, `slm`, `sass`, `less` and `stylus` out-of-box. How ever, you still have to install some loaders manually if you did not select that language with `vue:create`.
 
   You can add multiple languages at the same time: `rake vue:support[pug,stylus]`
 

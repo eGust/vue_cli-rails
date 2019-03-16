@@ -5,6 +5,7 @@ class VueCommand
 
   SUPPORED_FORMATS = {
     'pug' => %w[pug-plain-loader pug],
+    'slm' => %w[slm-loader slm],
     'sass' => SASS,
     'scss' => SASS,
     'less' => %w[less-loader less],
@@ -62,7 +63,7 @@ class VueCommand
   end
 
   def group_formats(formats)
-    formats.each_with_object([[], []]) do |result, fmt|
+    formats.each_with_object([[], []]) do |fmt, result|
       fmts = SUPPORED_FORMATS[fmt.downcase]
       if fmts
         result[0] += fmts
