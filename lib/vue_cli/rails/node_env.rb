@@ -60,7 +60,7 @@ module VueCli
           npm: 'npm i -g',
         },
         install: {
-          yarn: '',
+          yarn: 'yarn',
           npm: 'npm i',
         },
       }.freeze

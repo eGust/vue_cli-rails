@@ -121,13 +121,13 @@ class VueCreate
 
     # merge gitignore
     if gi_input == 'm'
-      old_gi_line_count = gi_lines.size
       old_gi = Set.new(gi_lines.map(&:strip))
+      new_lines = gi.read.split("\n")
 
-      gi.read.split("\n").map(&:strip).find_all(&:present?).each do |ln|
+      new_lines.map(&:strip).find_all(&:present?).each do |ln|
         gi_lines << ln unless old_gi.include?(ln)
       end
-      gi.write(gi_lines.map { |ln| "#{ln}\n" }.join('')) if gi_lines.size > old_gi_line_count
+      gi.write(gi_lines.map { |ln| "#{ln}\n" }.join('')) if gi_lines.size != new_lines.size
     elsif gi_input == 'k'
       gi.write(gi_lines.join(''))
     end
@@ -233,7 +233,7 @@ class VueCreate
     jest_config = JSON.parse(jest_config)
     if jest_config['transformIgnorePatterns'] &&
        !jest_config['transformIgnorePatterns'].include?('<rootDir>/node_modules/')
-      jest_config['transformIgnorePatterns'] << '<rootDir>/node_modules/'
+      jest_config['transformIgnorePatterns'].unshift('<rootDir>/node_modules/')
     end
     jest_config.delete('moduleNameMapper')
     jest = <<~JS

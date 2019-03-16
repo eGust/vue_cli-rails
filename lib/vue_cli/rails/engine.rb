@@ -21,14 +21,14 @@ module VueCli
           Configuration.instance unless is_dev
         end
 
+        ::ActionController::Renderers.add(:vue) do |entry, options|
+          render({ html: vue_entry(entry), layout: true }.merge(options))
+        end
+
         ::ActiveSupport.on_load(:action_controller) do
           ::ActionController::Base.class_eval do
             helper(Helper)
             include(Helper)
-
-            define_method(:render_vue) do |entry, **args|
-              render({ html: vue_entry(entry), layout: true }.merge(args))
-            end
           end
         end
 

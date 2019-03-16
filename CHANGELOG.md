@@ -1,0 +1,33 @@
+# Change Log
+
+## [0.4.0] - Released on 2019-03-17
+
+- Breaking change: changed `render_vue(entry_point)` to `render(vue: entry_point)`
+- Fixed some bugs cause incorrect configs when rerun `rake vue:create`
+- Adjusted Jest `transformIgnorePatterns` order
+- Added Change Log
+- Finished README
+
+## [0.3.1] - Released on 2019-03-16
+
+- Added [`slm`](https://github.com/slm-lang/slm) template support, which is a lite version of [Slim](http://slim-lang.com/) implementation in JS.
+- Fixed a bug of `rake vue:support[]`
+
+## [0.3.0] - Released on 2019-03-13
+
+- Breaking change: Moved entry point folder to `app/assets/vue/entry_points`
+- Added controller method `render_vue`
+- Some bug fixes
+
+## [0.2.0] - Released on 2019-03-03
+
+- Added Jest support
+
+## [0.1.6] - Released on 2019-03-03
+
+- Bug fixes
+
+## [0.1.2] - Released on 2019-02-24
+
+- First release.
+

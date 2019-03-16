@@ -47,7 +47,7 @@ Out-of-box workflow:
     > Don NOT select `In package.json` for "Where do you prefer placing config for Babel, PostCSS, ESLint, etc.?". Some functionalities like alias of jest may not work.
 
 2. Put your JavaScript files under `app/assets/vue/entry_points`.
-3. Insert your entry point by `vue_entry 'entry_point'` in views or `render_vue 'entry_point'` in controllers.
+3. Insert your entry point by `vue_entry 'entry_point'` in views or `render vue: 'entry_point'` in controllers.
 4. `webpack-dev-server` auto starts alongside `rails server` in dev mode.
 5. Invoke `env RAILS_ENV=production bundle exec rake vue:compile` to compile assets (you still must manually set `RAILS_ENV` to `production`).
 
@@ -75,110 +75,9 @@ If you are new to modern front-end development, or more specifically with `webpa
 
 > You may have interest of path alias in `config/vue.yml`.
 
-<details><summary>For example</summary>
+#### Use `render vue: <entry_point>` in controllers
 
-- File structure:
-
- ```text
- [+] app
-     [+] assets
-         [+] vue
-             [+] entry_points - Folder for entry points
-                 [+] foo
-                     [-] bar.js - entry point: import '~views/FooBar.vue'
-             [+] views - alias `~views`
-                 [-] FooBar.vue - Vue component for `foo/bar`
-     [+] controllers
-         [+] foo_controller.rb - controller
-     [+] views
-         [+] layout
-             [-] vue.html.erb - Vue layout
-         [+] foo
-             [-] bar.html.erb - View render: `vue_entry('foo/bar')`
- ```
-
-- `alias` in `config/vue.yml`:
-
- ```yaml
- # default
-   alias:
-     ~views: app/assets/vue/views
- ```
-
-- Your controller:
-
- ```ruby
- # app/controllers/foo_controller.rb
-
- class FooController < ApplicationController
-   layout 'vue'
- end
- ```
-
-- Your view:
-
- ```html
- <!-- file - app/views/foo/bar.html.erb -->
- <%= vue_entry('foo/bar') %>
- ```
-
-- Entry point JS:
-
- ```js
- // file - app/assets/vue/entry_points/foo/bar.js
- import Vue from 'vue';
-
- import Foo from '~views/FooBar.vue';
-
- new Vue({
-   render: h => h(Foo),
- }).$mount('#app');
- ```
-
-- Your Vue component for your entry point:
-
- ```vue
- // file - app/assets/vue/views/FooBar.vue
- <template>
-   <div id="foo-bar">
-     <h1>Foo/bar</h1>
-   </div>
- </template>
-
- <script>
- export default {
-   name: 'FooBar',
- };
- </script>
-
- <style scoped>
- #foo-bar {
-   color: green;
- }
- </style>
- ```
-
-- Layout:
-
- ```html
- <!-- file - app/views/layout/vue.html.erb -->
- <!DOCTYPE html>
-   <html>
-   <head>
-     <title>Vue</title>
-     <%= csrf_meta_tags %>
-   </head>
-   <body>
-     <div id="app"></div><%= yield %>
-   </body>
- </html>
- ```
-
-</details>
-
-#### Use `render_vue` in controllers
-
-Usually you only need `<div id="app"></div>` and `vue_entry 'entry/point'` to render a Vue page. You can use `render_vue 'entry/point'` inside your controller.
+Usually you only need `<div id="app"></div>` and `vue_entry 'entry/point'` to render a Vue page. You can use `render vue: 'entry/point'` inside your controller.
 
 This method is simply a wrap of `render html: vue_entry('entry_point'), layout: true`. So you can pass any arguments supported by `render` including `layout`.
 
@@ -190,7 +89,7 @@ class MyVueController < ApplicationController
   layout 'vue_base'
 
   def foo
-    render_vue 'foo/bar'
+    render vue: 'foo/bar'
   end
 end
 ```
@@ -404,7 +303,7 @@ You can check the full list on [Vue CLI official website](https://cli.vuejs.org/
     +  getSettings,
     } = railsConfig;
 
-    + const { configureWebpack: { entry, output, resolve } } = getSettings('configureWebpack');
+    + const { configureWebpack: { entry, output, resolve, module: cwModule } } = getSettings('configureWebpack');
 
     module.exports = {
       ...pickUpSettings`
@@ -428,6 +327,7 @@ You can check the full list on [Vue CLI official website](https://cli.vuejs.org/
     +    entry,
     +    output,
     +    resolve,
+    +    module: cwModule,
     +  },
       chainWebpack: (config) => {
     ```
@@ -480,9 +380,84 @@ You can check the full list on [Vue CLI official website](https://cli.vuejs.org/
 
     > I know it is not Rails-way at all. I don't want to waste time to just get it worked properly in Rails way - you are already using Node, why it bothers you?
 
+- My API does not work with CSRF token
+
+    Because Vue does not have opinion of Ajax (or JSON API) preference, you must implement what `jquery-ujs` does by yourself. There is an example code in vanilla JS with [querySelector](https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelector) whish should work for IE8+:
+
+    ```JS
+    // fetch API
+    async (url, data) => {
+      const $csrfParam = document.querySelector('meta[name="csrf-param"]');
+      const $csrfToken = document.querySelector('meta[name="csrf-token"]');
+      const csrfParam = ($csrfParam && $csrfParam.getAttribute('content')) || undefined;
+      const csrfToken = ($csrfToken && $csrfToken.getAttribute('content')) || undefined;
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-type': 'application/json',
+            'X-CSRF-Token': csrfToken,
+          },
+          body: JSON.stringify({
+            ...data,
+            [csrfParam]: csrfToken,
+          }),
+        });
+        return response.json();
+      } catch (e) {
+        // handle failed case
+      }
+    }
+    ```
+
+    Alternatively you can turn off CSRF token and set [SameSite cookie](https://gist.github.com/will/05cb64dc343296dec4d58b1abbab7aaf) if all your clients no longer use IE. [Modern browsers](https://caniuse.com/#feat=same-site-cookie-attribute) can handle `SameSite` flag to [prevent CSRF attacks](http://www.sjoerdlangkemper.nl/2016/04/14/preventing-csrf-with-samesite-cookie-attribute/).
+
 <details><summary>Q & A</summary>
 
 ## Q&A
+
+### Can I get rid of `js-yaml` and `webpack-assets-manifest`
+
+Only `webpack-assets-manifest` is a required dependency. It will be used to generate `manifest.json` which required for both dev and prod.
+
+`vue.rails.js` uses `js-yaml` for parsing `config/vue.yml`. It will fallback to `rake vue:json_config` if `js-yaml` not been installed. However, when your Rails app grow bigger, you will very likely find rake tasks start slower and slower.
+
+### Can I use YAML for template inside .vue
+
+Short answer I don't know and I don't recommend. There are several HAML packages but all are too old. JS world suggests [pug](https://pugjs.org). You can also use [slm](https://github.com/slm-lang/slm) if you prefer [Slim](http://slim-lang.com/). Both are quite similar to CSS selector syntax, which means you don't really need to spend time to learn.
+
+Just `rake vue:support[pug,slm]` and try them out: `<template lang="pug">` or `<template lang="slm">`.
+
+### Does it support pnpm
+
+No.
+
+The reason is `@vue/cli` does not support `pnpm` very well, or `npm` does not support `@vue/cli`. Who knows.
+
+You still have a chance to get it worked by giving `pnpm --shamefully-flatten` flag, which makes [no difference from `npm` or `yarn`](https://pnpm.js.org/docs/en/faq.html#solution-3).
+
+If someday they support each other, I'd like to support `pnpm` as well.
+
+### Your demo code seems awful
+
+Yes I admit it. Personally I'd like to directly write SPA with webpack tooling for front-end. Back-end will be a separated project, and it will be a Rails-API or Sinatra project if I want to use ActiveRecord.
+
+`webpack-dev-server` can simply be configured with a proxy and I can use something like `npm-run-all` to start 2 services at the same time. I had to write some not-so-good code to get those things done in Rails.
+
+The demo is more Rails way - separated layouts and views. SPA world uses client routers like `vue-router`.
+
+### It does not work on Windows
+
+Sorry, I don't think many gems work on Windows. Please install a virtual machine and run Linux on it. This gem is very likely working with `WSL`, however you may suffer performance issues due to [slow file system](https://github.com/Microsoft/WSL/issues/873#issuecomment-425272829)
+
+Currently `vue.config.js` is reading configurations from `vue.rails.js` which depends on `js-yaml`. It will fallback to `bundle exec rake vue:json_config` without `js-yaml` installed. You may suffer performance issue if your rake tasks are slow.
+
+### Will you support SSR
+
+I do want to support SSR. However, the way [Vue officially provided](https://ssr.vuejs.org/) requires you to write separated code for client and server then compile with Webpack, which is quite complicated.[ `prerender-spa-plugin`](https://github.com/chrisvfritz/prerender-spa-plugin) might be easier to achieve it.
+
+I will do more investigation like how [Nuxt.js](https://nuxtjs.org/) does SSR. But I can't guarantee anything now.
 
 ### Difference from Webpacker
 
@@ -541,41 +516,11 @@ You can check the full list on [Vue CLI official website](https://cli.vuejs.org/
 
     Only a few platform-specific settings available. All others are very standard.
 
-### Can I get rid of `js-yaml` and `webpack-assets-manifest`
-
-Only `webpack-assets-manifest` is a required dependency. It will be used to generate `manifest.json` which required for both dev and prod.
-
-`vue.rails.js` uses `js-yaml` for parsing `config/vue.yml`. It will fallback to `rake vue:json_config` if `js-yaml` not been installed. However, when your Rails app grow bigger, you will very likely find rake tasks start slower and slower.
-
-### Does it support pnpm
-
-No.
-
-The reason is `@vue/cli` does not support `pnpm` very well, or `npm` does not support `@vue/cli`. Who knows.
-
-You still have a chance to get it worked by giving `pnpm --shamefully-flatten` flag, which makes [no difference from `npm` or `yarn`](https://pnpm.js.org/docs/en/faq.html#solution-3).
-
-If someday they support each other, I'd like to support `pnpm` as well.
-
-### Your demo code seems awful
-
-Yes I admit it. Personally I'd like to directly write SPA with webpack tooling for front-end. Back-end will be a separated project, and it will be a Rails-API or Sinatra project if I want to use ActiveRecord.
-
-`webpack-dev-server` can simply be configured with a proxy and I can use something like `npm-run-all` to start 2 services at the same time. I had to write some not-so-good code to get those things done in Rails.
-
-The demo is more Rails way - separated layouts and views. SPA world uses client routers like `vue-router`.
-
-### It does not work on Windows
-
-Sorry, I don't think many gems work on Windows. Please install a virtual machine and run Linux on it. This gem is very likely working with `WSL`, however you may suffer performance issues due to [slow file system](https://github.com/Microsoft/WSL/issues/873#issuecomment-425272829)
-
-Currently `vue.config.js` is reading configurations from `vue.rails.js` which depends on `js-yaml`. It will fallback to `bundle exec rake vue:json_config` without `js-yaml` installed. You may suffer performance issue if your rake tasks are slow.
-
 </details>
 
 ## Explanation by Demo
 
-<details><summary>Not finished yet</summary>
+<details><summary>Copy Demo Code</summary>
 
 ### Install
 
@@ -663,11 +608,11 @@ This functionality is called [HMR (Hot Module Replacement)](https://webpack.js.o
 
 You can run ESLint by
 
-    $ yarn lint
+    $ yarn lint # npm run lint
 
 Run Jest
 
-    $ yarn test:unit
+    $ yarn test:unit # npm run test:unit
 
 ### Compile Assets
 
@@ -690,7 +635,7 @@ run: yarn exec vue-cli-service build
 ...
 ```
 
-Your file names could be different from mine. Don't worry, we won't look those files. There are the files you got:
+Your file names could be different from mine. Don't worry, we won't look those files. There are the files you will get:
 
 ```
 .
@@ -709,7 +654,9 @@ Your file names could be different from mine. Don't worry, we won't look those f
             └── foo.dcbad15e.js
 ```
 
-Let have a look at `app/assets/vue/manifest.json`:
+### How Entry Point works
+
+Let's take a look at `app/assets/vue/manifest.json`:
 
 ```json
 {
@@ -740,5 +687,9 @@ Let have a look at `app/assets/vue/manifest.json`:
   "foo.js": "/vue_assets/js/foo.dcbad15e.js"
 }
 ```
+
+As mentioned above, there are 2 files under `app/assets/vue/entry_points` folder: `foo.js` and `bar.js`. They will become entry points in `manifest.json`. When you call `render vue: 'bar'` in `VueDemoController` or `<%= vue_entry('foo') %>` in `app/views/vue_demo/foo.html.erb`, `vue_entry` will look for them in `entrypoints` of `manifest.json`, then generate `<link href="<path>" rel="stylesheet">` and `<script src="<path>"></script>` for each asset.
+
+It's slightly different on dev server. This gem will send requests to webpack-dev-server and fetch the paths on-the-fly. The request will be GET `http://localhost:3080/__manifest/?<entry_point>` for each `vue_entry`. You can also send GET request to `http://localhost:3080/__manifest/?!!INSPECT!!` to get the full manifest.
 
 </details>
