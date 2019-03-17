@@ -17,6 +17,7 @@ class VueCreate
     check_node!
     FileUtils.chdir(@root)
     @pending_install = false
+    @pending_fixes = []
     begin
       package_manager?
       install_vue_cli
@@ -29,6 +30,7 @@ class VueCreate
       generate_vue_yml
       ensure_entry_point!
       fix_jest_config!
+      eslint_fix!
       puts 'vue:create finished!'
     ensure
       FileUtils.chdir(@pwd)
@@ -195,11 +197,22 @@ class VueCreate
   def copy_config
     puts 'Copying configuration files...'
     FileUtils.cp(@src_dir.join('vue.rails.js'), "#{@root}/")
-    if @root.join('vue.config.js').exist?
-      puts 'Detected `vue.config.js`!'
-      return if @input.gets('  Do you want to overwrite vue.config.js?', 'yN') == 'n'
+
+    src_cfg = @src_dir.join('vue.config.js')
+    dst_cfg = @root.join('vue.config.js')
+    config = src_cfg.read
+    if dst_cfg.exist?
+      if dst_cfg.size > 500
+        puts 'Detected `vue.config.js`!'
+        return if @input.gets('  Do you want to overwrite vue.config.js?', 'yN') == 'n'
+      else
+        old_cfg = %x`node -e "console.log(JSON.stringify(require('./vue.config.js'),null,2))"`
+        config = config.sub('const oldConfig = {};', "const oldConfig = #{old_cfg};")
+      end
     end
-    FileUtils.cp(@src_dir.join('vue.config.js'), "#{@root}/")
+
+    dst_cfg.write(config)
+    @pending_fixes << dst_cfg.to_s
   end
 
   def generate_vue_yml
@@ -242,10 +255,15 @@ class VueCreate
       module.exports = #{JSON.pretty_generate(jest_config)}_MODULE_NAME_MAPPER_;
     JS
     jest_file.write(jest.sub(/\n?}_MODULE_NAME_MAPPER_/, ",\n  moduleNameMapper\n}"))
+    @pending_fixes << jest_file.to_s
+  rescue => e
+    STDERR.puts e.message
+  end
 
+  def eslint_fix!
     dev_deps = JSON.parse(@pack.read)['devDependencies']
     return unless dev_deps['eslint'].present?
-    @pm.exec('eslint', jest_file.to_s, '--fix')
+    @pm.exec('eslint', @pending_fixes.map { |fn| "'#{fn}'" }.join(' '), '--fix')
   rescue => e
     STDERR.puts e.message
   end

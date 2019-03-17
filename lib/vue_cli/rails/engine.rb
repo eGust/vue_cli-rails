@@ -5,6 +5,7 @@ module VueCli
     class Engine < ::Rails::Engine
       initializer 'vue_cli' do |app|
         if defined?(::Rails::Server)
+          Configuration.check!
           is_dev = ::Rails.env.development?
 
           if is_dev

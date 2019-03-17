@@ -103,6 +103,16 @@ module VueCli
       class << self
         attr_reader :dev_server_url, :entry_points
 
+        def check!
+          return if ::Rails.root.join('config/vue.yml').exist?
+          abort <<~ERROR
+            [ERROR] Failed to load vue_cli-rails!
+              Cannot find config file: config/vue.yml
+              Please call below command to initialize Vue:
+                #{::Rails.version.to_i > 4 ? 'rails' : 'bundle exec rake'} vue:create
+          ERROR
+        end
+
         def instance
           @instance ||= new
         end
