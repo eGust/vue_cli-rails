@@ -37,6 +37,7 @@ module VueCli
           },
         }
         @package_manager = config['package_manager']
+        c['packageManger'] = @package_manager
         cw = c['configureWebpack']
 
         c['env'] = ::Rails.env

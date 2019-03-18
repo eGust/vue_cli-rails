@@ -74,7 +74,7 @@ class VueCreate
     if @pack.exist?
       puts 'Detected `package.json`!'
       pack_input = @input.gets(
-        '  Do you want `vue create?` to overwrite your package.json',
+        '  Do you want vue-cli to overwrite your package.json',
         'yAks',
         a: 'Auto', k: 'Keep', s: 'Skip vue create',
       )
@@ -86,7 +86,7 @@ class VueCreate
     if gi.exist?
       puts 'Detected `.gitignore`!'
       gi_input = @input.gets(
-        '  Do you want `vue create?` to overwrite your .gitignore',
+        '  Do you want vue-cli to overwrite your .gitignore',
         'yMk',
         m: 'Merge', k: 'Keep',
       )

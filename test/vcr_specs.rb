@@ -3,6 +3,7 @@
 require 'rspec'
 require 'fileutils'
 require 'pathname'
+require 'json'
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -21,6 +22,7 @@ RSpec.describe 'vue_cli-rails demo is runable' do
     @cwd = Pathname.new(__dir__).join('vcdr')
     Dir.chdir(@cwd)
     @env = %x`which env`.chomp
+    @pm = JSON.parse(%x`bundle exec rake vue:json_config`)['packageManger']
   end
 
   it 'can invoke vue:lint' do
@@ -44,24 +46,24 @@ RSpec.describe 'vue_cli-rails demo is runable' do
     }.not_to raise_error
   end
 
-  it 'can run yarn lint' do
+  it 'can run npm run / yarn lint' do
     expect {
-      %x(#{@env} RAILS_ENV=test yarn lint)
+      %x(#{@env} RAILS_ENV=test #{@pm} lint)
     }.not_to raise_error
   end
 
-  it 'can run yarn test:unit' do
+  it 'can run npm run / yarn test:unit' do
     expect {
-      %x(#{@env} RAILS_ENV=test yarn test:unit)
+      %x(#{@env} RAILS_ENV=test #{@pm} test:unit)
     }.not_to raise_error
   end
 
-  it 'can add vue:node_dev and run yarn prod' do
+  it 'can add vue:node_dev and run npm run / yarn prod' do
     expect {
       %x(#{@env} bundle exec rake vue:node_dev)
     }.not_to raise_error
     expect {
-      %x(#{@env} yarn prod)
+      %x(#{@env} #{@pm} prod)
     }.not_to raise_error
   end
 end

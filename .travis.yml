@@ -5,19 +5,24 @@ cache:
   bundler: true
   yarn: true
 
-rvm:
-  - 2.3
-  - 2.4
-  - 2.5
-
-env:
-  - RAILS_VERSION=4.2
-  - RAILS_VERSION=5.2
-
 matrix:
-  exclude:
+  allow_failures:
+  - env: RAILS_VERSION=pre
+  include:
+    - rvm: 2.3
+      env: RAILS_VERSION=4.2 PACKAGE_MANAGER=npm
+    - rvm: 2.3
+      env: RAILS_VERSION=5.2 PACKAGE_MANAGER=yarn
+    - rvm: 2.4
+      env: RAILS_VERSION=5.2 PACKAGE_MANAGER=npm
     - rvm: 2.5
-      env: RAILS_VERSION=4.2
+      env: RAILS_VERSION=5.2 PACKAGE_MANAGER=yarn
+    - rvm: 2.6
+      env: RAILS_VERSION=5.2 PACKAGE_MANAGER=npm
+    - rvm: 2.5
+      env: RAILS_VERSION=pre PACKAGE_MANAGER=npm
+    - rvm: 2.6
+      env: RAILS_VERSION=pre PACKAGE_MANAGER=yarn
 
 gemfile:
   - test/Gemfile-rails.$RAILS_VERSION
@@ -28,19 +33,18 @@ before_install:
 install:
   - nvm install --lts
   - node -v
-  - yarn global add @vue/cli
+  - sh -c 'if test "$PACKAGE_MANAGER" = "npm"; then npm i -g @vue/cli; else yarn global add @vue/cli fi'
   - gem install rspec
 
-before_script:
-  - sh -c 'cd test && ./install.rb'
-
 script:
-  - sh -c 'cd test && rspec ./vcr_spec.rb'
+  - sh -c 'cd test && ./install.rb'
+  - sh -c 'cd test && rspec ./vcr_specs.rb'
 
 jobs:
   include:
     - stage: gem release
       rvm: 2.3
+      env: RAILS_VERSION=4.2 PACKAGE_MANAGER=yarn
       script: echo "Deploying to rubygems.org ..."
       deploy:
         provider: rubygems
