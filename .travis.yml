@@ -36,3 +36,14 @@ before_script:
 
 script:
   - sh -c 'cd test && rspec ./vcr_spec.rb'
+
+jobs:
+  include:
+    - stage: gem release
+      rvm: 2.3
+      script: echo "Deploying to rubygems.org ..."
+      deploy:
+        provider: rubygems
+        gem: vue_cli-rails
+        api_key: $RUBYGEMS_API_KEY
+        on: release

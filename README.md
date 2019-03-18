@@ -23,8 +23,6 @@ And then execute:
 - Node >= [8.9+](https://cli.vuejs.org/guide/installation.html)
 - Optional: `yarn`
 
-> The auto-testing for CI still WIP. Sorry I can't guarantee it works for now.
-
 ## Features
 
 - Feel free to use `yarn` or `npm`.
