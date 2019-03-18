@@ -1,7 +1,38 @@
 ---
 sudo: false
 language: ruby
-cache: bundler
+cache:
+  bundler: true
+  yarn: true
+
 rvm:
-  - 2.4.5
-before_install: gem install bundler -v 1.17.3
+  - 2.3
+  - 2.4
+  - 2.5
+
+env:
+  - RAILS_VERSION=4.2
+  - RAILS_VERSION=5.2
+
+matrix:
+  exclude:
+    - rvm: 2.5
+      env: RAILS_VERSION=4.2
+
+gemfile:
+  - test/Gemfile-rails.$RAILS_VERSION
+
+before_install:
+  - gem update --system
+
+install:
+  - nvm install --lts
+  - node -v
+  - yarn global add @vue/cli
+  - gem install rspec
+
+before_script:
+  - sh -c 'cd test && ./install.rb'
+
+script:
+  - sh -c 'cd test && rspec ./vcr_spec.rb'

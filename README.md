@@ -1,5 +1,7 @@
 # VueCli::Rails
 
+[![Build Status](https://travis-ci.com/eGust/vue_cli-rails.svg?branch=master)](https://travis-ci.com/eGust/vue_cli-rails)
+
 Let's make cool boy Vue even cooler on Rails!
 
 ## Installation
