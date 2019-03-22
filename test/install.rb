@@ -147,6 +147,28 @@ def yield_args_by_rails(ver)
       spring
       spring-watcher-listen
     ]
+  elsif ver.start_with?('6')
+    args = %w[
+      --database=sqlite3
+      --skip-git
+      --skip-keeps
+      --skip-bundle
+      --skip-yarn
+      --skip-turbolinks
+      --skip-listen
+      --skip-coffee
+      --skip-test
+    ]
+    white_list = %w[
+      rails
+      puma
+      sass-rails
+      uglifier
+      bootsnap
+      jquery-rails
+      spring
+      spring-watcher-listen
+    ]
   else
     abort("Unsupported Rails version: #{ver}!\n#{USAGE}")
   end
@@ -173,20 +195,25 @@ def rails_ver
   ver = ENV['RAILS_VERSION']
   abort("RAILS_VERSION not found!\n#{USAGE}") if ver.blank?
 
-  versions = %x`gem list -r -a -e rails`.scan(/\b((\d+\.)+\d+)\b/).map { |m| m[0] }
-  ver = ver.upcase == 'LATEST' ? versions.first : versions.find { |v| v.start_with?(ver) }
+  if ver.upcase == 'PRE'
+    ver = %x`gem list -r -e --pre rails`.scan(/\b((\d+\.)+\w+)\b/).map { |m| m[0] }.first
+  else
+    versions = %x`gem list -r -e -a rails`.scan(/\b((\d+\.)+\d+)\b/).map { |m| m[0] }
+    ver = ver.upcase == 'LATEST' ? versions.first : versions.find { |v| v.start_with?(ver) }
+  end
   abort("Can not find matched Rails version!\n#{USAGE}") if ver.blank?
   ver
 end
 
-def auto_install(pm = 'yarn')
+def auto_install(pm = nil)
   PTY.spawn('bundle exec rake vue:create 2>&1') do |r, w, _pid|
     STDERR.puts '--'
     STDERR.puts 'bundle exec rake vue:create'
     STDERR.puts 'AUTO FILL-UP'
     STDERR.puts ''
 
-    simple_answer(r, w, 'Which package manager', pm == 'yarn' ? 'y' : 'n')
+    simple_answer(r, w, 'Which package manager', pm == 'npm' ? 'n' : 'y')
+    simple_answer(r, w, 'Do you want vue-cli to overwrite your package.json')
     wait_answer(r, w, 'Generate project in current directory')
 
     ln = select_single(r, w, 'Please pick a preset', 'Manually select features')
@@ -209,12 +236,23 @@ def auto_install(pm = 'yarn')
 end
 
 def main
+  # install Rails
   ver = rails_ver
   Cmd.run("gem install rails -v #{ver}") unless %x`gem list -e rails`.include?(ver)
 
+  # install @vue/cli
+  pm = ENV['PACKAGE_MANAGER'] == 'npm' ? 'npm' : 'yarn'
+  if pm == 'npm'
+    Cmd.run('npm i -g @vue/cli')
+  else
+    Cmd.run('yarn global add @vue/cli')
+  end
+
+  # remove old test folder
   dest_dir = Pathname.new(__dir__).join('vcdr')
   FileUtils.rm_rf(dest_dir) if dest_dir.exist?
 
+  # generate Rails folder
   args, white_list, append_lines = yield_args_by_rails(ver)
   puts %x{rails _#{ver}_ -v}
   Cmd.run("rails _#{ver}_ new vcdr #{args.join(' ')}")
@@ -222,7 +260,7 @@ def main
 
   update_gemfile(dest_dir, white_list, append_lines)
   Cmd.run('bundle install')
-  auto_install
+  auto_install(pm)
 end
 
 main

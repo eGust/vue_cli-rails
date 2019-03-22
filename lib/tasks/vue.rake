@@ -25,7 +25,8 @@ namespace :vue do
   desc 'Build assets: set [with_rails_assets] to invoke assets:precompile as well'
   task :compile, [:with_rails_assets] => :environment do |_t, args|
     pm = VueCli::Rails::Configuration.instance.node_env
-    pm.exec('vue-cli-service build', env: { 'RAILS_ENV' => ::Rails.env })
+    env = { 'RAILS_ENV' => ENV['RAILS_ENV'].presence || ::Rails.env }
+    pm.exec('vue-cli-service build', env: env)
     ::Rake::Task['assets:precompile'].invoke if args.with_rails_assets
   end
 
@@ -47,5 +48,12 @@ namespace :vue do
   task node_dev: :environment do
     require_relative '../helpers/scripts/vue_command'
     VueCommand.new.install_node_dev
+  end
+
+  desc 'Inspect webpack settings' do
+  task inspect: :environment do
+    pm = VueCli::Rails::Configuration.instance.node_env
+    env = { 'RAILS_ENV' => ENV['RAILS_ENV'].presence || ::Rails.env }
+    pm.exec('vue-cli-service inspect', env: env)
   end
 end

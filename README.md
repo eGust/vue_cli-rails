@@ -4,6 +4,8 @@
 
 Let's make cool boy Vue even cooler on Rails!
 
+[Change Log](./CHANGELOG.md)
+
 ## Installation
 
 Add this line to your Rails application's `Gemfile`:
@@ -42,14 +44,15 @@ And then execute:
 
 Out-of-box workflow:
 
-1. `bundle exec rake vue:create` and follow the steps.
+1. Make sure you already installed `@vue/cli` globally via `npm` (`npm i -g @vue/cli`) or `yarn` (`yarn global add @vue/cli`)
+2. `bundle exec rake vue:create` and follow the steps.
 
     > Don NOT select `In package.json` for "Where do you prefer placing config for Babel, PostCSS, ESLint, etc.?". Some functionalities like alias of jest may not work.
 
-2. Put your JavaScript files under `app/assets/vue/entry_points`.
-3. Insert your entry point by `vue_entry 'entry_point'` in views or `render vue: 'entry_point'` in controllers.
-4. `webpack-dev-server` auto starts alongside `rails server` in dev mode.
-5. Invoke `env RAILS_ENV=production bundle exec rake vue:compile` to compile assets (you still must manually set `RAILS_ENV` to `production`).
+3. Put your JavaScript files under `app/assets/vue/entry_points`.
+4. Insert your entry point by `vue_entry 'entry_point'` in views or `render vue: 'entry_point'` in controllers.
+5. `webpack-dev-server` auto starts alongside `rails server` in dev mode.
+6. Invoke `env RAILS_ENV=production bundle exec rake vue:compile` to compile assets (you still must manually set `RAILS_ENV` to `production`).
 
 > More settings are available in `config/vue.yml`
 
@@ -279,7 +282,37 @@ Feel free to update `vue.config.js` by yourself. There are some lines of boiler-
   }
   ```
 
+- `vue:inspect`
+
+    Alias of `vue inspect`, `npx vue-cli-service inspect` or `yarn exec vue-cli-service inspect`. Display the webpack configuration file.
+
 > You may need to invoke `rake` with `bundle exec`. Rails 5 and above supports new `rails rake:task` flavor.
+
+## Migrate from Webpacker
+
+It's very easy to migrate from Webpacker.
+
+1. Install this gem and `bundle install`
+2. Install `@vue/cli` globally then follow the instructions of `rake vue:create`;
+3. Edit `config/vue.yml`, set `default/entry_path` to `source_path` (by default `app/javascript`) joins `source_entry_path` (by default `packs`);
+4. Change all `javascript_packs_with_chunks_tag` to `vue_entry`;
+5. Fix all nonsense `xxxx_packs_tag`;
+6. If you mind `public_output_path` and `manifest_output` you can change them to follow Webpacker values;
+    > I strongly not recommend to put `manifest_output.json` under `public` folder;
+7. Update `vue.config.js` if you have any customized webpack configurations;
+    > You can inspect how webpack settings at anytime
+8. Directly `rails s` to start dev server;
+    > You can get rid of `bin/webpack-dev-server` and `bin/webpack` now. However, still recommend `rake vue:node_dev` and run `yarn dev` so it will kill `webpack-dev-server` properly when your Rails dev server stopped.
+9.  Call `env RAILS_ENV=production rake vue:compile[with_rails_assets]` instead of `env RAILS_ENV=production rake assets:precompile` to compile all assets for production.
+10. Delete unused Webpacker files
+   - `bin/webpack-dev-server`
+   - `bin/webpack`
+   - `config/webpack`
+   - `config/webpacker.yml`
+
+> Strongly recommend to backup your codebase before the migration.
+
+Enjoy Hot Module Replacement now!
 
 ## Valid Vue CLI config Options
 
