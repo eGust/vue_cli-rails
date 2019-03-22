@@ -33,7 +33,6 @@ before_install:
 install:
   - nvm install --lts
   - node -v
-  - sh -c 'if test "$PACKAGE_MANAGER" = "npm"; then npm i -g @vue/cli; else yarn global add @vue/cli fi'
   - gem install rspec
 
 script:

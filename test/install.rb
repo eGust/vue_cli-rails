@@ -236,12 +236,23 @@ def auto_install(pm = nil)
 end
 
 def main
+  # install Rails
   ver = rails_ver
   Cmd.run("gem install rails -v #{ver}") unless %x`gem list -e rails`.include?(ver)
 
+  # install @vue/cli
+  pm = ENV['PACKAGE_MANAGER'] == 'npm' ? 'npm' : 'yarn'
+  if pm == 'npm'
+    Cmd.run('npm i -g @vue/cli')
+  else
+    Cmd.run('yarn global add @vue/cli')
+  end
+
+  # remove old test folder
   dest_dir = Pathname.new(__dir__).join('vcdr')
   FileUtils.rm_rf(dest_dir) if dest_dir.exist?
 
+  # generate Rails folder
   args, white_list, append_lines = yield_args_by_rails(ver)
   puts %x{rails _#{ver}_ -v}
   Cmd.run("rails _#{ver}_ new vcdr #{args.join(' ')}")
@@ -249,7 +260,7 @@ def main
 
   update_gemfile(dest_dir, white_list, append_lines)
   Cmd.run('bundle install')
-  auto_install(ENV['PACKAGE_MANAGER'])
+  auto_install(pm)
 end
 
 main
