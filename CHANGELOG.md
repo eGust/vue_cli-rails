@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.5.0] - Released on 2019-03-23
+
+- Added option `entry_path` to simplify migration from `Webpacker`
+- Added instructions for migration from `Webpacker`
+- Added task `vue:inspect`
+- Fixed ignoring `RAILS_ENV` for `rake vue:compile`
+
 ## [0.4.1] - Released on 2019-03-18
 
 - Better hint than crashing when run Rails server with `vue_cli-rails` but `rake vue:create` have not been called
@@ -37,4 +44,3 @@
 ## [0.1.2] - Released on 2019-02-24
 
 - First release.
-

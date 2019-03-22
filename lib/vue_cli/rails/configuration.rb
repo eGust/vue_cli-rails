@@ -30,14 +30,14 @@ module VueCli
 
       def load_config(config)
         config = config[::Rails.env]
+        entry_path = config['entry_path'].presence || 'app/assets/vue/entry_points'
         c = {
           'configureWebpack' => {
-            'entry' => entry,
+            'entry' => entry(entry_path),
             'resolve' => {},
           },
         }
         @package_manager = config['package_manager']
-        c['packageManger'] = @package_manager
         cw = c['configureWebpack']
 
         c['env'] = ::Rails.env
@@ -138,8 +138,8 @@ module VueCli
         @root.join(*path).to_s
       end
 
-      def entry
-        base_dir = @root.join('app/assets/vue/entry_points')
+      def entry(entry_path)
+        base_dir = @root.join(entry_path)
         start = base_dir.to_s.size + 1
         Dir[base_dir.join('**/*.js')].each_with_object({}) do |filename, h|
           h[filename[start...-3]] = filename
