@@ -28,15 +28,15 @@ And then execute:
 ## Features
 
 - Feel free to use `yarn` or `npm`.
-- Single `vue_entry` rather than confusing `stylesheet_pack_tag`, `javascript_packs_tag` and `javascript_packs_with_chunks_tag`.
-- Get all benefits of [@vue/cli](https://cli.vuejs.org/).
+- Single `vue_entry` rather than confusing `javascript_packs_with_chunks_tag`, `stylesheet_pack_tag`, `javascript_packs_tag`, etc.
+- Get all benefits of [Vue CLI](https://cli.vuejs.org/).
 
-    - Powered by `webpack` 4
-    - DRY: all-in-one configuration file rather than repeating for `webpack`, `eslint` and etc.
-    - Out-of-box tooling: Babel, TypeScript, PWA, `vue-router`, `vuex`, CSS pre-processors, linter and testing tools.
-    - Enhanced alias support in `jest.config.js`.
+  - Powered by `webpack` 4
+  - DRY: all-in-one configuration file rather than repeating for `webpack`, `eslint` and etc.
+  - Out-of-box tooling: Babel, TypeScript, PWA, `vue-router`, `Vuex`, CSS pre-processors, linter and testing tools.
+  - Enhanced alias support in `jest.config.js`.
 
-- Run `webpack-dev-server` together with Rails server with development mode.
+- Run `webpack-dev-server` together with Rails server in dev mode.
 - Just single `RAILS_ENV`, no more `NODE_ENV`.
 - Rails way configurations in `config/vue.yml`.
 
@@ -44,7 +44,7 @@ And then execute:
 
 Out-of-box workflow:
 
-1. Make sure you already installed `@vue/cli` globally via `npm` (`npm i -g @vue/cli`) or `yarn` (`yarn global add @vue/cli`)
+1. Make sure `@vue/cli` already installed globally via `npm` (`npm i -g @vue/cli`) or `yarn` (`yarn global add @vue/cli`)
 2. `bundle exec rake vue:create` and follow the steps.
 
     > Don NOT select `In package.json` for "Where do you prefer placing config for Babel, PostCSS, ESLint, etc.?". Some functionalities like alias of jest may not work.
@@ -64,9 +64,11 @@ Out-of-box workflow:
 
 The root path of your Vue assets is `app/assets/vue`. This gem will generate several folders. However, `app/assets/vue/entry_points` is the only one matters.
 
+> The entry path is [configurable](#general-settings-file-is-configvueyml) in `config/vue.xml`.
+
 Webpack sees one JavaScript file as the center of a web page rather than HTML. Thus all styles, images, fonts and other assets are related to a JS files by `import 'css/png/svg/woff2/json'`. Any `.js` file under `app/assets/vue/entry_points` will be a entry-point.
 
-Please ONLY puts your entry-point files under `app/assets/vue/entry_points` folder with `.js` extension name.
+Please ONLY puts your entry-point files under entry folder with `.js` extension name.
 
 > Be aware, `.js.erb` and `.vue.erb` are NOT supported. I will explain the reason in [Q&A section](#difference-from-webpacker).
 
@@ -160,6 +162,10 @@ I will explain what happens in [Explanation by Demo](#explanation-by-demo).
 ### Available Settings
 
 #### General settings file is `config/vue.yml`
+
+- `entry_path`
+
+  Entry point folder. Default: `app/assets/vue`
 
 - `manifest_output`
 
@@ -293,22 +299,23 @@ Feel free to update `vue.config.js` by yourself. There are some lines of boiler-
 It's very easy to migrate from Webpacker.
 
 1. Install this gem and `bundle install`
-2. Install `@vue/cli` globally then follow the instructions of `rake vue:create`;
+2. Install `@vue/cli` globally and follow the instructions of `rake vue:create`;
 3. Edit `config/vue.yml`, set `default/entry_path` to `source_path` (by default `app/javascript`) joins `source_entry_path` (by default `packs`);
 4. Change all `javascript_packs_with_chunks_tag` to `vue_entry`;
 5. Fix all nonsense `xxxx_packs_tag`;
-6. If you mind `public_output_path` and `manifest_output` you can change them to follow Webpacker values;
-    > I strongly not recommend to put `manifest_output.json` under `public` folder;
+6. If you mind `public_output_path` and `manifest_output`, you can change them to follow Webpacker values;
+    > I strongly NOT recommend to put `manifest_output.json` under `public` folder;
 7. Update `vue.config.js` if you have any customized webpack configurations;
-    > You can inspect how webpack settings at anytime
+    > You can inspect webpack settings at anytime with `rake vue:inspect` or `vue inspect`
 8. Directly `rails s` to start dev server;
     > You can get rid of `bin/webpack-dev-server` and `bin/webpack` now. However, still recommend `rake vue:node_dev` and run `yarn dev` so it will kill `webpack-dev-server` properly when your Rails dev server stopped.
-9.  Call `env RAILS_ENV=production rake vue:compile[with_rails_assets]` instead of `env RAILS_ENV=production rake assets:precompile` to compile all assets for production.
+9. Call `env RAILS_ENV=production rake vue:compile[with_rails_assets]` instead of `env RAILS_ENV=production rake assets:precompile` to compile all assets for production.
 10. Delete unused Webpacker files
-   - `bin/webpack-dev-server`
-   - `bin/webpack`
-   - `config/webpack`
-   - `config/webpacker.yml`
+
+  - `bin/webpack-dev-server`
+  - `bin/webpack`
+  - `config/webpack`
+  - `config/webpacker.yml`
 
 > Strongly recommend to backup your codebase before the migration.
 
@@ -411,14 +418,13 @@ You can check the full list on [Vue CLI official website](https://cli.vuejs.org/
     yarn dev
     ```
 
-    > I know it is not Rails-way at all. I don't want to waste time to just get it worked properly in Rails way - you are already using Node, why it bothers you?
+    > I know it is not Rails-way at all. I don't want to waste time to reinvent it - you are already using Node, why it bothers you?
 
 - My API does not work with CSRF token
 
-    Because Vue does not have opinion of Ajax (or JSON API) preference, you must implement what `jquery-ujs` does by yourself. There is an example code in vanilla JS with [querySelector](https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelector) whish should work for IE8+:
+    Because Vue does not have opinion of Ajax (or JSON API) preference, you must implement what `jquery-ujs` does by yourself. There is an example in vanilla JS with [querySelector](https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelector) (which should work for IE8+) and [Fetch API](https://developer.mozilla.org/en/docs/Web/API/Fetch_API):
 
     ```JS
-    // fetch API
     async (url, data) => {
       const $csrfParam = document.querySelector('meta[name="csrf-param"]');
       const $csrfToken = document.querySelector('meta[name="csrf-token"]');
@@ -437,6 +443,11 @@ You can check the full list on [Vue CLI official website](https://cli.vuejs.org/
             [csrfParam]: csrfToken,
           }),
         });
+
+        if (!response.ok) {
+          // handle bad response
+        }
+
         return response.json();
       } catch (e) {
         // handle failed case
@@ -446,13 +457,17 @@ You can check the full list on [Vue CLI official website](https://cli.vuejs.org/
 
     Alternatively you can turn off CSRF token and set [SameSite cookie](https://gist.github.com/will/05cb64dc343296dec4d58b1abbab7aaf) if all your clients no longer use IE. [Modern browsers](https://caniuse.com/#feat=same-site-cookie-attribute) can handle `SameSite` flag to [prevent CSRF attacks](http://www.sjoerdlangkemper.nl/2016/04/14/preventing-csrf-with-samesite-cookie-attribute/).
 
+- My Jest complains about `import`
+
+    Seems `transformIgnorePatterns` in `jest.config.js` not working the same way in different environments. I found sometimes `<rootDir>/node_modules/` works while `/node_modules/` works on another machine. Try to change the order and you will find which one works for you.
+
 - Mocha tests not working
 
-    This is an known issue.
+    This is a known issue and I am not going to fix it recently.
 
 - TypeScript can not find my aliases
 
-    This is an known issue. TS is still using `tsconfig.json` rather than a `.js` or `.ts` file. You must manually update it for now. I will try to find a way out.
+    This is a known issue. TS is still using `tsconfig.json` rather than a `.js` or `.ts` file. You must manually update it for now. I will try to find a way out.
 
 - My `yarn test:...`/`npm run test:...` not working properly
 
@@ -472,7 +487,7 @@ Only `webpack-assets-manifest` is a required dependency. It will be used to gene
 
 `vue.rails.js` uses `js-yaml` for parsing `config/vue.yml`. It will fallback to `rake vue:json_config` if `js-yaml` not been installed. However, when your Rails app grow bigger, you will very likely find rake tasks start slower and slower.
 
-### Can I use YAML for template inside .vue
+### Can I use HAML for template inside .vue files
 
 Short answer I don't know and I don't recommend. There are several HAML packages but all are too old. JS world suggests [pug](https://pugjs.org). You can also use [slm](https://github.com/slm-lang/slm) if you prefer [Slim](http://slim-lang.com/). Both are quite similar to CSS selector syntax, which means you don't really need to spend time to learn.
 
@@ -482,7 +497,7 @@ Just `rake vue:support[pug,slm]` and try them out: `<template lang="pug">` or `<
 
 No.
 
-The reason is `@vue/cli` does not support `pnpm` very well, or `npm` does not support `@vue/cli`. Who knows.
+The reason is Vue CLI does not support `pnpm` very well, or `npm` does not support `@vue/cli`. Who knows.
 
 You still have a chance to get it worked by giving `pnpm --shamefully-flatten` flag, which makes [no difference from `npm` or `yarn`](https://pnpm.js.org/docs/en/faq.html#solution-3).
 
@@ -494,13 +509,13 @@ Yes I admit it. Personally I'd like to directly write SPA with webpack tooling f
 
 `webpack-dev-server` can simply be configured with a proxy and I can use something like `npm-run-all` to start 2 services at the same time. I had to write some not-so-good code to get those things done in Rails.
 
-The demo is more Rails way - separated layouts and views. SPA world uses client routers like `vue-router`.
+The demo is more Rails way - separated layouts and views. SPA world uses some client router like `vue-router`.
 
 ### It does not work on Windows
 
-Sorry, I don't think many gems work on Windows. Please install a virtual machine and run Linux on it. This gem is very likely working with `WSL`, however you may suffer performance issues due to [slow file system](https://github.com/Microsoft/WSL/issues/873#issuecomment-425272829)
+Sorry, I don't think many gems work on Windows. Please install a virtual machine and run Linux on it. This gem is very likely working with `WSL`, however you may suffer performance issues due to its [file system](https://github.com/Microsoft/WSL/issues/873#issuecomment-425272829)
 
-Currently `vue.config.js` is reading configurations from `vue.rails.js` which depends on `js-yaml`. It will fallback to `bundle exec rake vue:json_config` without `js-yaml` installed. You may suffer performance issue if your rake tasks are slow.
+Currently `vue.config.js` is reading configurations from `vue.rails.js` which depends on `js-yaml`. It will fallback to `bundle exec rake vue:json_config` without `js-yaml` installed. Your rake tasks may spend a minute to load which apparently is not a good idea.
 
 ### Will you support SSR
 
@@ -547,13 +562,13 @@ I will do more investigation like how [Nuxt.js](https://nuxtjs.org/) does SSR. B
 
     You may or may not know [Rails turn this flag on by default](https://github.com/rails/webpacker/issues/769#issuecomment-458216151).
 
-    I just don't buy it. It could be a security issue, especially for a startup or small company where Rails is widely being adapted. It's not fair enough to your customers.
+    I just don't buy it. It could be a security issue, especially for a startup or small company where Rails is widely being adapted. There are plenty ways if you intended to open your source, like [Gitlab does](https://gitlab.com/gitlab-org/gitlab-ce/). You should not do unaware contribution.
 
-    You can manually turn it on in `config/vue.yml`. It would be totally on your own risk because you intended to do that.
+    You can manually set `productionSourceMap` to `true` in `config/vue.yml`. Good on you!
 
-8. It does not put `manifest.json` under `public` folder.
+8. This gem puts `manifest.json` in `app/assets/vue` directory by default than `public`.
 
-    Again, I have no idea why doing that.
+    Again, I have no idea why Webpacker doing that.
 
 9. `webpack-dev-server` automatically starts with `rails server` in dev mode.
 
@@ -575,7 +590,7 @@ I will do more investigation like how [Nuxt.js](https://nuxtjs.org/) does SSR. B
 
 Run `bundle exec rake vue:create` or `rails vue:create` in Rails 5+, and follow the steps:
 
-```
+```bash
 $ bundle exec rake vue:create
 Which package manager to use? (Y=yarn, N=npm) [Yn]
 ...
@@ -613,7 +628,7 @@ This functionality is called [HMR (Hot Module Replacement)](https://webpack.js.o
 
 ### What in the box
 
-```
+```txt
 .
 ├── app
 │   ├── assets
@@ -667,7 +682,7 @@ Run Jest
 
 First let's compile the assets
 
-```
+```bash
 $ env RAILS_ENV=production bundle exec rake vue:compile
 run: yarn exec vue-cli-service build
 ...
@@ -686,7 +701,7 @@ run: yarn exec vue-cli-service build
 
 Your file names could be different from mine. Don't worry, we won't look those files. There are the files you will get:
 
-```
+```txt
 .
 ├── app
 │   ├── assets
